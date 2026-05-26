@@ -1,119 +1,137 @@
-name: geo-system-docker
+name: geoflow-laravel
 
 services:
   postgres:
-    image: pgvector/pgvector:pg16
-    container_name: geo-system-postgres
-    command: postgres -c timezone=${TZ:-Asia/Shanghai}
+    image: ${PGVECTOR_IMAGE:-pgvector/pgvector:pg16}
+    container_name: geoflow-postgres
     environment:
-      POSTGRES_DB: "${DB_NAME:-geo_system}"
-      POSTGRES_USER: "${DB_USER:-geo_user}"
-      POSTGRES_PASSWORD: "${DB_PASSWORD:-geo_password}"
-      TZ: "${TZ:-Asia/Shanghai}"
-      PGTZ: "${TZ:-Asia/Shanghai}"
+      POSTGRES_DB: ${DB_DATABASE:-geo_flow}
+      POSTGRES_USER: ${DB_USERNAME:-geo_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-geo_password}
     ports:
       - "127.0.0.1:${DB_EXPOSE_PORT:-15432}:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-    restart: unless-stopped
+      - ${POSTGRES_DATA_DIR:-./docker-data/dev/postgres}:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-geo_user} -d ${DB_NAME:-geo_system}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-geo_user} -d ${DB_DATABASE:-geo_flow}"]
       interval: 10s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
-  web:
+  redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    container_name: geoflow-redis
+    ports:
+      - "127.0.0.1:${REDIS_EXPOSE_PORT:-16379}:6379"
+    restart: unless-stopped
+
+  init:
+    image: geoflow-app:latest
     build:
       context: .
       dockerfile: docker/Dockerfile
-      target: web
-    image: geo-system:web
-    container_name: geo-system-web
-    init: true
-    ports:
-      - "${HOST_PORT:-18080}:8080"
+      args:
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-https://mirrors.aliyun.com/composer/}
+    container_name: geoflow-init
+    working_dir: /var/www/html
+    env_file:
+      - ./.env
+    # 交给 entrypoint 执行自动初始化（生成 APP_KEY / migrate / seed）
+    command: ["php", "artisan", "about"]
     environment:
-      DB_DRIVER: "${DB_DRIVER:-pgsql}"
-      DB_HOST: "${DB_HOST:-postgres}"
-      DB_PORT: "${DB_PORT:-5432}"
-      DB_NAME: "${DB_NAME:-geo_system}"
-      DB_USER: "${DB_USER:-geo_user}"
-      DB_PASSWORD: "${DB_PASSWORD:-geo_password}"
-      APP_PORT: 8080
-      SITE_URL: "http://localhost:${HOST_PORT:-18080}"
-      APP_SECRET_KEY: "${APP_SECRET_KEY}"
-      REQUIRE_STRONG_APP_SECRET: "${REQUIRE_STRONG_APP_SECRET:-false}"
-      TZ: "${TZ:-Asia/Shanghai}"
+      AUTO_GENERATE_APP_KEY: "true"
+      AUTO_INIT_ONCE: "true"
     volumes:
       - ./:/var/www/html
-    restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+      redis:
+        condition: service_started
+    restart: "no"
+
+  app:
+    image: geoflow-app:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-https://mirrors.aliyun.com/composer/}
+    container_name: geoflow-app
+    working_dir: /var/www/html
+    env_file:
+      - ./.env
+    command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
+    ports:
+      - "${APP_PORT:-18080}:8080"
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  queue:
+    image: geoflow-app:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-https://mirrors.aliyun.com/composer/}
+    container_name: geoflow-queue
+    working_dir: /var/www/html
+    env_file:
+      - ./.env
+    command: ["php", "artisan", "queue:work", "redis", "--queue=geoflow,distribution,default", "--sleep=1", "--tries=1", "--timeout=300"]
+    volumes:
+      - ./:/var/www/html
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    restart: unless-stopped
 
   scheduler:
+    image: geoflow-app:latest
     build:
       context: .
       dockerfile: docker/Dockerfile
-      target: scheduler
-    image: geo-system:scheduler
-    container_name: geo-system-scheduler
-    profiles: ["scheduler"]
-    init: true
-    environment:
-      DB_DRIVER: "${DB_DRIVER:-pgsql}"
-      DB_HOST: "${DB_HOST:-postgres}"
-      DB_PORT: "${DB_PORT:-5432}"
-      DB_NAME: "${DB_NAME:-geo_system}"
-      DB_USER: "${DB_USER:-geo_user}"
-      DB_PASSWORD: "${DB_PASSWORD:-geo_password}"
-      CRON_INTERVAL: "${CRON_INTERVAL:-60}"
-      APP_SECRET_KEY: "${APP_SECRET_KEY}"
-      REQUIRE_STRONG_APP_SECRET: "${REQUIRE_STRONG_APP_SECRET:-false}"
-      TZ: "${TZ:-Asia/Shanghai}"
+      args:
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-https://mirrors.aliyun.com/composer/}
+    container_name: geoflow-scheduler
+    working_dir: /var/www/html
+    env_file:
+      - ./.env
+    command: ["php", "artisan", "schedule:work"]
     volumes:
       - ./:/var/www/html
-    restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
-      web:
-        condition: service_started
+      init:
+        condition: service_completed_successfully
+    restart: unless-stopped
 
-  worker:
+  reverb:
+    image: geoflow-app:latest
     build:
       context: .
       dockerfile: docker/Dockerfile
-      target: scheduler
-    image: geo-system:worker
-    container_name: geo-system-worker
-    profiles: ["scheduler"]
-    init: true
-    command: ["php", "/var/www/html/bin/worker.php"]
-    environment:
-      DB_DRIVER: "${DB_DRIVER:-pgsql}"
-      DB_HOST: "${DB_HOST:-postgres}"
-      DB_PORT: "${DB_PORT:-5432}"
-      DB_NAME: "${DB_NAME:-geo_system}"
-      DB_USER: "${DB_USER:-geo_user}"
-      DB_PASSWORD: "${DB_PASSWORD:-geo_password}"
-      APP_SECRET_KEY: "${APP_SECRET_KEY}"
-      REQUIRE_STRONG_APP_SECRET: "${REQUIRE_STRONG_APP_SECRET:-false}"
-      TZ: "${TZ:-Asia/Shanghai}"
+      args:
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-https://mirrors.aliyun.com/composer/}
+    container_name: geoflow-reverb
+    working_dir: /var/www/html
+    env_file:
+      - ./.env
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    ports:
+      - "${REVERB_EXPOSE_PORT:-18081}:8080"
     volumes:
       - ./:/var/www/html
-    restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
-      web:
-        condition: service_started
-
-volumes:
-  pgdata:
+      init:
+        condition: service_completed_successfully
+    restart: unless-stopped

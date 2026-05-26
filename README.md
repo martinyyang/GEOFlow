@@ -1,18 +1,18 @@
 # GEOFlow
 
-> Languages: [简体中文](README.md) | [English](README_en.md) | [日本語](README_ja.md) | [Español](README_es.md) | [Русский](README_ru.md)
+> Languages: [简体中文](README.md) | [English](docs/readme/README_en.md) | [日本語](docs/readme/README_ja.md) | [Español](docs/readme/README_es.md) | [Русский](docs/readme/README_ru.md) | [Português (BR)](docs/readme/README_pt_BR.md)
 
-> 一个面向 GEO / SEO 内容运营场景的开源内容生产系统。它把模型配置、素材管理、任务调度、草稿审核和前台发布串成一条完整链路，适合搭建自动化内容站点或内部内容运营后台。
+> GEOFlow 是一套专门面向 GEO（生成式引擎优化）的开源智能内容工程与多站点分发系统。它把知识库、素材库、提示词、AI 生成任务、审核发布、数据分析、GEOFlow Agent 目标站点包、WordPress REST 渠道和远端静态页面分发串联为一条可持续运营的工作链路，目标是帮助团队把可信资料沉淀为可管理、可发布、可追踪、可同步到多端的 GEO 内容资产。
 
-[![PHP](https://img.shields.io/badge/PHP-7.4%2B-blue)](https://www.php.net/)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-blue)](https://www.php.net/)
 [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://docs.docker.com/compose/)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/yaojingang/GEOFlow?style=social)](https://github.com/yaojingang/GEOFlow/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/yaojingang/GEOFlow?style=social)](https://github.com/yaojingang/GEOFlow/network/members)
 [![GitHub issues](https://img.shields.io/github/issues/yaojingang/GEOFlow)](https://github.com/yaojingang/GEOFlow/issues)
 
-Released under the Apache License 2.0.
+GEOFlow 以 [Apache License 2.0](LICENSE) 开源发布。你可以自由使用、复制、修改和分发本项目，包括商业使用；请保留版权声明和许可证文本，并遵守 Apache-2.0 的专利授权、商标与免责声明条款。
 
 ---
 
@@ -20,29 +20,57 @@ Released under the Apache License 2.0.
 
 | 特性 | 说明 |
 |------|------|
-| 🤖 多模型内容生成 | 兼容 OpenAI 风格接口，可接入不同 AI 服务商 |
-| 📦 批量任务运行 | 任务创建、定时调度、队列执行、失败重试 |
-| 🗂 素材统一管理 | 标题库、关键词库、图片库、知识库、提示词集中管理 |
-| 📋 审核与发布工作流 | 草稿、审核、发布三段式流程，可切换自动发布 |
-| 🔍 面向搜索展示优化 | 文章 SEO 元信息、Open Graph、结构化数据 |
-| 🎨 前台模板预览 | 支持 preview-first 主题包、模板预览与后台启用 |
-| 🐳 可直接部署 | 支持 Docker Compose，本地和服务器都能跑 |
-| 🗄 PostgreSQL 运行时 | 默认基于 PostgreSQL，适合稳定运行和并发写入 |
+| 🤖 多模型内容生成 | 兼容 OpenAI 风格接口和 Gemini 原生接口，支持 chat / embedding 模型、Provider URL 自动适配、智能模型切换、失败重试和调用统计 |
+| 🧠 知识库与 RAG | 知识库上传后支持结构化规则切片、可选 LLM 语义规划和稳定回退；配置 embedding 模型后写入向量，在文章生成时召回相关资料 |
+| 🗂 素材与提示词体系 | 标题库、关键词库、图片库、作者库、知识库、正文提示词、特殊提示词集中管理 |
+| 📦 任务自动化 | 支持任务创建、生成数量、草稿池、审核开关、发布节奏、队列执行、失败重试、发布范围控制和任务文章筛选 |
+| 📋 审核与文章管理 | 草稿、审核、发布、回收站、作者、分类、SEO 字段和任务来源统一管理 |
+| 📡 多站点分发管理 | 支持 GEOFlow Agent 与 WordPress REST 渠道、密钥管理、目标站点包、静态模式、伪静态规则、远端文章编辑/删除和队列日志 |
+| 🧾 目标站点包 | 为每个渠道生成预配置 PHP Agent 包，内置首页、详情页、静态资源、sitemap、`llms.txt` / TXT 地图和 Schema |
+| 📊 数据分析 | 集中展示系统总览、单站内容运营、多站分发、访问日志、Top 内容、AI 爬虫识别和趋势图 |
+| 🔍 SEO 与 LLM 抓取友好输出 | 文章 SEO 元信息、Open Graph、Schema、GFM Markdown、独立 CSS、图片同步、sitemap 和 TXT 地图 |
+| 🎨 前台与主题 | 默认主题、主题包、预览路径、后台主题切换；GEOFlow Agent 渠道可同步站点标题、版权、主题和分类设置 |
+| 🌍 后台多语言 | 后台支持中文、英文、日语、西班牙语、俄语、葡萄牙语（巴西）切换，并覆盖 2.0 新模块 |
+| 🔔 版本提醒 | 后台可按 `version.json` 检查 GitHub 新版本，并在有新版本时提醒管理员 |
+| 🐳 可直接部署 | **Docker Compose** 一键拉起 PostgreSQL（pgvector）、Redis、应用、队列、调度、Reverb 和生产 Nginx/php-fpm |
 
 ---
 
 ## 🖼 界面预览
 
-<p>
-  <img src="docs/images/screenshots/home.png" alt="GEOFlow 首页预览" width="48%" />
-  <img src="docs/images/screenshots/task-management.png" alt="GEOFlow 任务管理预览" width="48%" />
-</p>
-<p>
-  <img src="docs/images/screenshots/article-management.png" alt="GEOFlow 文章管理预览" width="48%" />
-  <img src="docs/images/screenshots/ai-config.png" alt="GEOFlow AI 配置器预览" width="48%" />
-</p>
+<table>
+  <tr>
+    <td width="34%" rowspan="3"><img src="docs/images/screenshots/analytics.png" alt="GEOFlow 中文数据分析" /><br /><sub>数据分析</sub></td>
+    <td width="33%" rowspan="2"><img src="docs/images/screenshots/site-settings.png" alt="GEOFlow 中文网站设置" /><br /><sub>网站设置</sub></td>
+    <td width="33%"><img src="docs/images/screenshots/home.png" alt="GEOFlow 中文后台首页" /><br /><sub>后台首页</sub></td>
+  </tr>
+  <tr>
+    <td width="33%"><img src="docs/images/screenshots/task-management.png" alt="GEOFlow 中文任务管理" /><br /><sub>任务管理</sub></td>
+  </tr>
+  <tr>
+    <td width="33%"><img src="docs/images/screenshots/ai-config.png" alt="GEOFlow 中文 AI 模型配置" /><br /><sub>AI 模型配置</sub></td>
+    <td width="33%"><img src="docs/images/screenshots/materials.png" alt="GEOFlow 中文素材管理" /><br /><sub>素材管理</sub></td>
+  </tr>
+</table>
 
-这四个页面基本覆盖了站点首页、任务调度、文章流程和模型配置这几条主链路。其余后台页面说明保留在 `docs/`。
+上述页面覆盖后台首页、数据分析、任务调度、素材库、模型配置与网站设置等主链路；更多后台说明见 `docs/`。
+
+---
+
+## 🆕 新版本重点
+
+GEOFlow 2.0 重点变化包括：
+
+- **后台首页改为运营导航**：保留三步上手引导，并按单站点运营、多站点分发和配套 skill 资源组织入口。
+- **Gemini 与 OpenAI-compatible 接入更完整**：AI 模型配置同时覆盖 OpenAI 风格 Provider 与 Gemini 原生 chat / embedding 路径。
+- **知识库支持语义切片规划**：提供结构化规则切片、自动策略和可选 LLM 语义规划，LLM 只规划边界，最终切片仍从原文稳定重建。
+- **数据分析独立成页**：系统总览、内容运营、任务健康、素材健康、分发状态、访问日志和 AI 爬虫趋势集中到 `/admin/analytics`。
+- **分发管理进入可运行闭环**：支持 GEOFlow Agent 和 WordPress REST 渠道新建、密钥管理、测试连接、目标站点包下载、静态/伪静态模式、远端设置同步、队列、日志、远端文章编辑与删除。
+- **任务发布范围更清晰**：任务可选择“本地和渠道站点同时发布”“仅发布到渠道站点”“仅发布到本站”，仅本站模式会禁用渠道选择并避免进入远程分发队列。
+- **目标渠道站点支持静态页面**：文章分发后生成远端首页、详情页、sitemap、TXT 地图和 `llms.txt`，并同步图片与独立 CSS。
+- **素材与 RAG 更完整**：知识库切片、向量化状态、标题库、关键词库、图片库、作者和提示词体系形成任务生产输入。
+- **部署与安全增强**：生产 Docker 使用 Nginx + PHP-FPM，默认管理员 seed 不覆盖已有账号，Docker 镜像和 Composer 镜像可配置。
+- **多语言覆盖补齐**：后台语言包覆盖 2.0 新增模块，减少界面中出现裸翻译 key 或英文兜底。
 
 ---
 
@@ -51,13 +79,17 @@ Released under the Apache License 2.0.
 ```
 后台管理页面
     ↓
-任务调度器 / 队列
+AI 配置 / 素材库 / 提示词 / 任务配置
     ↓
-Worker 执行 AI 生成
+调度器 / 队列 / Worker 执行 AI 生成
     ↓
 草稿 / 审核 / 发布
     ↓
-前台文章与 SEO 页面输出
+本地前台文章与 SEO 页面
+    ↓
+分发队列 / 目标站点 Agent
+    ↓
+远端静态首页、详情页、sitemap、TXT 地图与 llms.txt
 ```
 
 ---
@@ -66,20 +98,32 @@ Worker 执行 AI 生成
 
 | 层级 | 说明 |
 |------|------|
-| Web / Admin | 前台文章站点与后台管理页面，负责内容浏览、素材管理、任务管理和配置入口 |
-| API / CLI | `/api/v1` 提供机器接口，`bin/geoflow` 提供本地 CLI 能力，适合批量任务和自动化接入 |
-| Scheduler / Worker | 调度器负责扫描任务和入队，Worker 负责实际调用模型生成内容 |
-| Domain Services | `includes/` 中的任务、文章、队列、AI、检索等服务承载核心业务规则 |
-| Persistence | PostgreSQL 作为运行时数据库，保存任务、文章、素材、审核状态和系统配置 |
+| Web / Admin | **Laravel** 路由与控制器；前台文章站点、**Blade** 后台、数据分析、分发管理、素材与任务入口 |
+| API / Agent | 本地 API 与目标站点 PHP Agent；负责分发健康检查、文章接收、远端设置同步和静态文件生成 |
+| Scheduler / Queue / Reverb | **Laravel Scheduler** 扫描与入队；**`queue:work` / Horizon** 消费生成与分发任务；**Reverb** 按需启用 |
+| Domain & Jobs | `app/Services`、`app/Jobs`、`app/Http/Controllers` 等承载 AI 生成、RAG、发布、分发和日志分析规则 |
+| Persistence | **PostgreSQL**（推荐 **pgvector** 镜像与线上实例一致）+ **Redis**（队列/缓存等）+ 目标站点本地 JSON/静态文件 |
 
 核心链路：
 
-1. 后台配置模型、提示词和素材库
-2. 创建任务并进入调度
-3. 调度器写入 job queue
-4. Worker 调用 AI 生成正文
+1. 在后台配置模型、提示词与素材库
+2. 准备知识库、标题库、关键词库、图片库和作者库，按需要选择知识库切片策略
+3. 创建任务并进入调度与队列
+4. Worker（队列进程）调用模型生成正文与元数据
 5. 文章进入草稿、审核、发布链路
-6. 前台输出文章与 SEO 页面
+6. 本地前台输出文章与 SEO 页面
+7. 如选择分发渠道，文章进入分发队列并同步到 GEOFlow Agent 或 WordPress 目标站点
+8. 数据分析页持续查看内容生产、分发状态、访问日志和 AI 爬虫趋势
+
+---
+
+## ⚡ 后台三步上手
+
+登录后台后，建议按仪表盘里的「快速开始」完成第一轮验证：
+
+1. **配置 API**：至少添加一个可用 chat 模型；如果需要知识库 RAG 召回，再添加一个 embedding 模型，并选择适合的知识库切片策略。
+2. **配置素材库**：准备知识库、标题库、关键词库、图片库和作者。知识库建议先用真实、可验证的业务资料。
+3. **新建任务**：选择标题库、素材、模型、生成数量、发布频率和发布范围，先让文章进入草稿或审核流程，再逐步开启自动发布与多站点分发。
 
 ---
 
@@ -87,20 +131,20 @@ Worker 执行 AI 生成
 
 GEOFlow 适合这些真实且可落地的场景：
 
-- **独立 GEO 官网**  
+- **独立 GEO 官网**
   把官网内容、产品资料、FAQ、案例和品牌知识组织成一个可持续更新的内容系统。目标是提升 AI 搜索可见度、品牌信源覆盖和内容运营效率，而不是堆砌低质量页面。
-- **官网中的 GEO 子频道**  
+- **官网中的 GEO 子频道**
   在现有官网下搭建一个独立的资讯、知识或解决方案频道。目标是让品牌内容更结构化、更适合搜索引用，也方便不同团队协同更新。
-- **独立 GEO 信源站点**  
+- **独立 GEO 信源站点**
   面向某个行业、主题或问题域，持续沉淀高质量文章、榜单、解读、指南和资料。目标是构建稳定可信的外部内容资产，而不是做信息污染。
-- **GEO 内容管理系统**  
+- **GEO 内容管理系统**
   作为内部内容生产后台，统一管理模型、素材、标题、图片、知识库、审核和发布。目标是提升团队提效、降低重复劳动、减少分散工具切换。
-- **GEO 多站点 / 多栏目部署**  
+- **GEO 多站点 / 多栏目部署**
   用同一套系统管理多个站点、多个栏目或多个主题模板。目标是让内容生产、模板切换、分发和维护更标准化。
-- **自动化信源管理与内容分发**  
+- **自动化信源管理与内容分发**
   对知识库、专题内容、资讯更新和内容分发流程进行工程化管理。目标是让真正有价值的信息更稳定地被用户和 AI 理解、引用和检索。
 
-这套系统的收益，应该建立在**真实、优质、持续维护的知识库**之上。  
+这套系统的收益，应该建立在**真实、优质、持续维护的知识库**之上。
 我们不鼓励利用系统制造信息噪音、批量污染互联网或堆积虚假内容。GEOFlow 的本质是帮助团队更高效地管理、生产和分发可信内容，提升 AI 营销效率和 GEO 运营效率，而不是替代事实、替代判断或替代内容质量本身。
 
 ---
@@ -109,327 +153,224 @@ GEOFlow 适合这些真实且可落地的场景：
 
 不同场景下，建议这样使用 GEOFlow：
 
-- **作为独立 GEO 官网运行**  
+- **作为独立 GEO 官网运行**
   直接部署完整前台与后台，围绕官网栏目、产品页延展内容、FAQ、案例和专题进行运营。适合希望把官网做成 AI 搜索友好型内容资产的团队。
-- **作为官网中的 GEO 子频道运行**  
+- **作为官网中的 GEO 子频道运行**
   将 GEOFlow 作为一个相对独立的内容频道部署，再通过导航、子域名或目录与主站打通。适合不想重构主站、但需要快速上线内容频道的团队。
-- **作为 GEO 信源站运行**  
+- **作为 GEO 信源站运行**
   单独维护一个面向特定主题的内容站点，把知识库和资料建设放在首位，再通过任务系统做稳定更新。适合想做行业型、专题型或问题导向型内容资产的团队。
-- **作为内部 GEO 内容管理后台运行**  
-  把前台弱化，重点使用后台的模型配置、素材库、任务调度、审核发布和 API / CLI / Skill 协同能力。适合内容团队、增长团队、品牌团队做内部生产系统。
-- **作为多站点 / 多频道系统运行**  
+- **作为内部 GEO 内容管理后台运行**
+  把前台弱化，重点使用后台的模型配置、素材库、任务调度、审核发布与 API 能力。适合内容团队、增长团队、品牌团队做内部生产系统。
+- **作为多站点 / 多频道系统运行**
   使用不同模板、栏目、域名或部署实例，管理多个内容出口。适合需要同时维护多个品牌频道、多个主题站或多个实验站点的团队。
-- **作为自动化信源管理系统运行**  
+- **作为自动化信源管理系统运行**
   重点建设知识库、标题库、图片库和提示词体系，把系统当作一个内容工程与分发操作台。适合希望长期沉淀可信知识资产、再逐步扩展自动化能力的团队。
 
 建议的使用顺序是：
 
-1. 先确定真实的业务目标和目标读者  
-2. 先建设知识库，再建设自动化流程  
-3. 先确保内容真实、可核验、可维护  
-4. 再用模型、任务和模板能力去提效  
+1. 先确定真实的业务目标和目标读者
+2. 先建设知识库，再建设自动化流程
+3. 先确保内容真实、可核验、可维护
+4. 再用模型、任务和模板能力去提效
 
-如果知识库本身不真实、不完整、不稳定，再强的自动化也只会放大噪音。  
+如果知识库本身不真实、不完整、不稳定，再强的自动化也只会放大噪音。
 所以在 GEOFlow 里，**知识库建设应该始终排在最前面**。
 
 ---
 
 ## 🚀 快速开始
 
-### 方式一：Docker（推荐）
+### 方式一：Docker（开发 / 演示）
 
 ```bash
 # 1. 克隆仓库
 git clone https://github.com/yaojingang/GEOFlow.git
 cd GEOFlow
 
-# 2. 复制环境变量文件
+# 2. 复制环境变量
 cp .env.example .env
 
-# 3. 编辑 .env，设置必要参数（见下方配置说明）
+# 3. 按需编辑 .env（数据库、Redis、APP_URL、ADMIN_BASE_PATH、REVERB_* 等）
 vi .env
 
-# 4. 启动 Web、PostgreSQL、调度器与 Worker
-docker compose --profile scheduler up -d --build
-
-# 访问前台
-open http://localhost:18080
-
-# 访问后台
-open http://localhost:18080/geo_admin/
+# 4. 构建并启动（含 postgres、redis、init、app、queue、scheduler、reverb）
+docker compose build
+docker compose up -d
 ```
+
+- 前台默认访问：`http://localhost:18080`（端口由环境变量 **`APP_PORT`** 控制，默认 `18080`）
+- 后台登录：`http://localhost:18080/geo_admin/login`（前缀由 **`ADMIN_BASE_PATH`** 控制，默认 `geo_admin`）
+
+首次启动会运行 **`init`** 容器：在数据库就绪后执行首次迁移与种子（默认管理员见下文「默认管理员」）。
+
+### 方式一补充：Docker（生产）
+
+生产环境建议使用 **`docker-compose.prod.yml`**，改为 **`Nginx + php-fpm`**，而不是 `php artisan serve`。
+
+如果希望在常见云服务器上自动完成环境自检、Docker 检测、`.env.prod` 生成、容器部署和部署后健康检查，可以使用参考部署脚本：
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/yaojingang/GEOFlow/main/deploy-scripts/geoflow-docker-deploy.sh -o geoflow-docker-deploy.sh
+bash geoflow-docker-deploy.sh
+```
+
+脚本说明见 [`deploy-scripts/README.md`](deploy-scripts/README.md)。
+
+```bash
+cp .env.prod.example .env.prod
+vi .env.prod
+
+docker compose --env-file .env.prod -f docker-compose.prod.yml build
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres redis
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
+docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
+```
+
+- 前台 / 后台统一经 `web`（Nginx）访问
+- PHP 由 `app`（php-fpm）解析
+- **默认管理员**：生产 `init` 服务会在迁移后执行一次 `db:seed`，只在目标用户名不存在时写入默认后台账号；重复执行不会覆盖已有账号或密码
+- 详细说明见 `docs/deployment/DEPLOYMENT.md`
 
 ### 方式二：本地 PHP 服务器
 
-**前置要求:** PHP 7.4+，开启 `pdo_pgsql`、`curl` 扩展，并准备本地 PostgreSQL
+**前置要求：** PHP **8.2+**，启用 `pdo_pgsql`、`redis` 等 Laravel 常用扩展；本机已安装 **PostgreSQL** 与 **Redis**；已安装 **Composer 2.x**。
 
 ```bash
 # 1. 克隆仓库
 git clone https://github.com/yaojingang/GEOFlow.git
 cd GEOFlow
 
-# 2. 配置数据库环境变量
-export DB_DRIVER=pgsql
-export DB_HOST=127.0.0.1
-export DB_PORT=5432
-export DB_NAME=geo_system
-export DB_USER=geo_user
-export DB_PASSWORD=geo_password
+# 2. 环境与依赖
+cp .env.example .env
+# 编辑 .env：将 DB_HOST/DB_* 指向本机 Postgres，REDIS_* 指向本机 Redis，QUEUE_CONNECTION=redis 等
 
-# 3. 启动开发服务器
-php -S localhost:8080 router.php
+composer install --no-interaction --prefer-dist
+php artisan key:generate
 
-# 访问后台
-open http://localhost:8080/geo_admin/
+# 3. 数据库与存储
+php artisan migrate --force
+php artisan db:seed --force    # 可选：写入默认管理员等
+php artisan storage:link
+
+# 4. 开发用 HTTP（仅本地调试；生产请用 Nginx + PHP-FPM，站点根目录 public/）
+php artisan serve --host=127.0.0.1 --port=8080
 ```
 
-## 🤝 配套 Skill
+另开终端启动常驻进程（与 Docker 中 `queue` / `scheduler` / `reverb` 对应）：
 
-这个项目配套提供了两个公开 skill：
+```bash
+php artisan queue:work redis --queue=geoflow,distribution,default --sleep=1 --tries=1 --timeout=300
+php artisan schedule:work
+php artisan reverb:start
+```
 
-- Skill 仓库：[yaojingang/yao-geo-skills](https://github.com/yaojingang/yao-geo-skills)
-- CLI 运维：`skills/geoflow-cli-ops`
-- 前台模板复刻：`skills/geoflow-template`
+- 后台：`http://127.0.0.1:8080/geo_admin/login`（若修改了 `ADMIN_BASE_PATH` 请替换路径）
+- 生产可用 `php artisan horizon` 替代 `queue:work`（需按项目配置托管进程）
 
-适用场景：
+---
 
-- 通过本地 CLI 创建和管理任务
-- 上传文章草稿
-- 审核和发布文章
-- 检查任务与 job 状态
-- 基于参考网址生成 GEOFlow 兼容的前台主题包
-- 输出 `tokens.json / mapping.json` 并走预览优先的模板迭代
+## 环境要求（部署检查清单）
 
-相关文档：
+| 组件 | 说明 |
+|------|------|
+| PHP | **8.2+**（Docker 镜像可为 8.4） |
+| 扩展 | Laravel 常规扩展；PostgreSQL 需 `pdo_pgsql`；Redis 队列需 `redis` |
+| Composer | 2.x |
+| 数据库 | **PostgreSQL**（推荐 **pgvector**，与 `docker-compose.yml` 中镜像一致） |
+| Redis | 队列、缓存等（本地极简调试可将 `QUEUE_CONNECTION` 改为 `sync`，生产不推荐） |
 
-- [前台模板预览与启用](docs/project/THEME_PREVIEW.md)
+---
+
+## 源码部署补充说明
+
+**目录权限（Linux / macOS 常见）：**
+
+```bash
+chmod -R ug+rwx storage bootstrap/cache
+```
+
+**默认管理员（执行 `php artisan db:seed` 后，以 `Database\\Seeders\\AdminUserSeeder` 为准）：**
+
+| 字段 | 值 |
+|------|-----|
+| 用户名 | `GEOFLOW_ADMIN_USERNAME`，默认 `admin` |
+| 密码 | 本地开发默认 `password`；生产环境请设置 `GEOFLOW_ADMIN_PASSWORD`。若生产环境留空且账号尚不存在，seed 会生成一次性随机密码并输出到初始化日志 |
+
+补充规则：`AdminUserSeeder` 只在目标用户名不存在时创建账号；重复执行不会覆盖已有用户名、邮箱或密码。若账号已存在，即使生产环境 `GEOFLOW_ADMIN_PASSWORD` 为空，也不会重新生成或打印密码。
+
+### 管理员登录失败锁定与手动解锁
+
+- 后台账号连续登录失败 **5 次** 会自动锁定（`status=locked`）。
+- 被锁定账号无法继续登录，需管理员手动解锁。
+- 解锁命令：
+
+```bash
+php artisan geoflow:admin-unlock <username>
+```
+
+例如：
+
+```bash
+php artisan geoflow:admin-unlock admin
+```
+
+**生产环境 Web：** 使用 Nginx / Apache + **PHP-FPM**，网站根目录指向项目 **`public/`**，勿将仓库根目录直接暴露为文档根。
+
+---
+
+## Docker 部署补充说明
+
+### 开发 Compose 服务一览
+
+| 服务 | 作用 |
+|------|------|
+| `postgres` | PostgreSQL 16 + pgvector |
+| `redis` | Redis 7 |
+| `init` | 一次性初始化（`restart: "no"`） |
+| `app` | `php artisan serve`，映射 **`${APP_PORT:-18080}:8080`** |
+| `queue` | `queue:work redis` |
+| `scheduler` | `schedule:work` |
+| `reverb` | WebSocket，映射 **`${REVERB_EXPOSE_PORT:-18081}:8080`** |
+
+宿主机仅绑定 **127.0.0.1** 暴露数据库 / Redis 端口时，见 `docker-compose.yml` 中的 `DB_EXPOSE_PORT`、`REDIS_EXPOSE_PORT`。
+
+### 入口脚本（`docker/entrypoint.sh`）常用变量
+
+| 变量 | 默认 | 含义 |
+|------|------|------|
+| `COMPOSER_ON_START` | `true` | 容器启动时执行 `composer install` |
+| `AUTO_MIGRATE` | `true` | 每次启动执行 `php artisan migrate --force` |
+| `AUTO_INIT_ONCE` | 仅 `init` 为 `true` | 新库时执行一次 `migrate` + `db:seed` |
+| `AUTO_GENERATE_APP_KEY` | `init` 内为 `true` | 无有效 `APP_KEY` 时自动生成 |
+| `AUTO_SEED` | `false` | 为 `true` 时**每次**启动都 `db:seed`（慎用） |
+
+Compose 将 **`./storage`** 与 **`./.env`** 挂载进容器；应用代码在镜像内。若要用于正式生产，请改用仓库新增的 **`docker-compose.prod.yml`**（`Nginx + php-fpm`），并参见 `docs/deployment/DEPLOYMENT.md`。
+
+**升级建议：** `git pull` → `docker compose build` → `docker compose up -d`。
+
+---
+
+## 开发与测试
+
+```bash
+composer test
+./vendor/bin/pint
+```
 
 ---
 
 ## 🌍 多语言文档
 
-- [English README](README_en.md)
-- [日本語 README](README_ja.md)
-- [Español README](README_es.md)
-- [Русский README](README_ru.md)
-- [文档中心](docs/README.md)
-- [Wiki 源稿（中英双语）](docs/wiki/README.md)
+- [English README](docs/readme/README_en.md)
+- [日本語 README](docs/readme/README_ja.md)
+- [Español README](docs/readme/README_es.md)
+- [Русский README](docs/readme/README_ru.md)
 
 ---
 
-## ⚙️ 环境变量配置
+## 📄 开源协议
 
-复制 `.env.example` 为 `.env` 并按需修改：
-
-```dotenv
-# Web 服务对外暴露端口（默认 18080）
-HOST_PORT=18080
-
-# 站点访问地址（需与 HOST_PORT 对应）
-SITE_URL=http://localhost:18080
-
-# 应用安全密钥（建议使用 32 位以上随机字符串）
-APP_SECRET_KEY=replace-with-a-long-random-secret
-
-# Cron 调度间隔（秒，默认 60）
-CRON_INTERVAL=60
-
-# 时区
-TZ=Asia/Shanghai
-```
-
----
-
-## 📖 上手流程
-
-1. 登录后台  
-访问 `/geo_admin/`，使用管理员账号进入后台。默认管理员用户名和密码：`admin / admin888`，登录后可自行修改。
-
-2. 配置 AI 模型  
-在“AI 配置中心 → AI 模型管理”里添加模型，填写 API 地址、模型 ID 和密钥。可使用**服务商快速填充**按钮一键预填常用服务商配置：
-
-   | 服务商 | API 地址 | 模型 ID |
-   |--------|---------|--------|
-   | **MiniMax** | `https://api.minimax.io` | `MiniMax-M2.7` / `MiniMax-M2.7-highspeed` |
-   | OpenAI | `https://api.openai.com` | `gpt-4o` |
-   | DeepSeek | `https://api.deepseek.com` | `deepseek-chat` |
-   | 智谱 GLM | `https://open.bigmodel.cn/api/paas/v4` | `glm-4.6` / `glm-5` |
-   | 火山方舟 | `https://ark.cn-beijing.volces.com/api/v3` | 推理接入点 ID（如 `ep-xxxx`） |
-
-   支持填写服务商基础地址或完整接口 URL。聊天模型默认补全 `/v1/chat/completions`，embedding 模型默认补全 `/v1/embeddings`；智谱 `/api/paas/v4` 与火山方舟 `/api/v3` 这类版本化基础地址会自动补全各自对应的 capability 路径。Rerank / 重排序接口当前尚未接入独立模型配置。
-
-3. 准备素材  
-创建标题库、图片库、知识库和提示词模板。
-
-4. 创建任务  
-在“任务管理”里选择标题库、模型、提示词、图片库和发布规则。
-
-5. 启动生成  
-任务进入调度与 worker 执行链路，文章会按配置生成到草稿或直接发布。
-
-> 首次部署后，建议立刻修改管理员密码和 `APP_SECRET_KEY`。
-
----
-
-## 🔄 内容生成流程
-
-```
-配置模型 / 素材 / 提示词
-        ↓
-创建任务
-        ↓
-调度器入队
-        ↓
-Worker 调用 AI 生成正文
-        ↓
-可选插图 / SEO 元信息
-        ↓
-草稿 / 审核 / 发布
-        ↓
-前台展示
-```
-
----
-
-## 📁 目录结构
-
-```text
-GEOFlow/
-├── index.php                     前台首页入口，负责文章列表与站点聚合展示
-├── article.php                   文章详情页入口，负责正文、SEO 和相关文章渲染
-├── category.php                  分类页入口，按分类聚合文章
-├── archive.php                   归档页入口，用于按时间浏览内容
-├── router.php                    本地开发路由入口，供 `php -S` 使用
-├── docker-compose.yml            开发环境编排，启动 web / postgres / scheduler / worker
-├── docker-compose.prod.yml       生产环境编排模板
-├── start.sh                      本地快速启动脚本
-├── .env.example                  环境变量模板
-│
-├── admin/                        后台管理系统
-│   ├── dashboard.php             后台仪表盘与统计总览
-│   ├── tasks.php                 任务管理页，查看任务状态、重试、执行情况
-│   ├── task-create.php           新建任务页，配置标题库、模型、提示词和发布规则
-│   ├── articles.php              文章列表页，查看草稿、已发布文章与流程状态
-│   ├── articles-review.php       审核中心，处理待审核文章
-│   ├── materials.php             素材管理入口，统一进入标题库、图片库、知识库等
-│   ├── ai-models.php             AI 模型配置页，填写模型地址、ID 和密钥
-│   ├── ai-prompts.php            提示词模板管理页
-│   ├── site-settings.php         站点设置页，管理站点名称、SEO、前台配置
-│   └── includes/                 后台公共模板、导航和页面骨架
-│
-├── api/v1/                       对机器开放的 API 层
-│   └── index.php                 API 单入口，负责路由分发、鉴权和响应输出
-│
-├── assets/                       前端静态资源
-│   ├── css/                      前后台样式文件
-│   ├── js/                       前后台交互脚本
-│   └── images/                   默认图片与静态图标资源
-│
-├── bin/                          CLI 与后台运行脚本
-│   ├── geoflow                   本地 CLI，供 skill 和自动化脚本调用
-│   ├── cron.php                  调度器，负责扫描任务并写入队列
-│   ├── worker.php                常驻 Worker，负责实际调用 AI 生成内容
-│   ├── db_maintenance.php        数据库维护工具
-│   ├── migrate_sqlite_to_pg.php  历史迁移脚本
-│   ├── api/                      API 辅助脚本，例如 token 创建
-│   └── git/                      发布同步与开源检查脚本
-│
-├── docker/                       容器镜像与启动辅助脚本
-│   ├── Dockerfile                Web / Scheduler / Worker 多阶段镜像定义
-│   ├── entrypoint.sh             Web 容器启动入口
-│   ├── scheduler.sh              调度容器启动入口
-│   └── php.ini                   容器内 PHP 配置
-│
-├── docs/                         对外文档中心
-│   ├── deployment/               安装与部署文档
-│   ├── project/                  API、CLI、结构说明等研发文档
-│   ├── 系统说明文档.md           系统整体功能说明
-│   ├── AI_PROJECT_GUIDE.md       AI 相关核心模块说明
-│   └── FAQ.md                    常见问题
-│
-├── includes/                     核心业务逻辑与服务层
-│   ├── config.php                全局配置、常量和基础运行参数
-│   ├── db_support.php            数据库驱动和连接辅助函数
-│   ├── database.php              前台与基础数据访问封装
-│   ├── database_admin.php        后台 schema 初始化和默认数据引导
-│   ├── functions.php             公共函数、Markdown 渲染、后台登录辅助
-│   ├── ai_engine.php             任务执行主引擎，串起标题、正文、插图和落库
-│   ├── ai_service.php            通用 AI 请求封装
-│   ├── job_queue_service.php     队列 claim / complete / fail / retry 逻辑
-│   ├── task_service.php          任务基础服务
-│   ├── task_lifecycle_service.php 任务启动、停止、入队等生命周期动作
-│   ├── article_service.php       文章创建、更新、审核、发布服务
-│   ├── api_auth.php              API Bearer 鉴权
-│   ├── api_token_service.php     API token 生成与校验
-│   └── catalog_service.php       CLI/API 用的基础资源字典输出
-│
-└── data/                         运行时数据目录占位；公开仓库不附带真实数据库和业务数据
-```
-
-目录约束：
-
-- 前台入口文件放根目录，方便直接部署和路由映射
-- `admin/` 放后台页面和后台动作入口
-- `api/v1/` 放正式对外 API
-- `bin/` 放 CLI、调度和维护脚本
-- `includes/` 放核心业务逻辑和服务层
-- `docs/` 只保留对外真正需要的文档
-
----
-
-## 🐳 Docker 组件
-
-| 服务 | 说明 | 默认启动 |
-|------|------|----------|
-| `web` | 提供前后台 HTTP 访问 | ✅ |
-| `postgres` | PostgreSQL 数据库 | ✅ |
-| `scheduler` | 任务调度器 | `--profile scheduler` |
-| `worker` | 常驻生成进程 | `--profile scheduler` |
-
-```bash
-# 仅启动 Web（不含调度）
-docker compose up -d
-
-# 启动完整服务（含调度器和 Worker）
-docker compose --profile scheduler up -d
-
-# 查看完整服务日志
-docker compose logs -f
-```
-
----
-
-## 🛡 安全说明
-
-- 所有数据库操作使用 **PDO 预处理语句**，防止 SQL 注入
-- 表单提交均验证 **CSRF Token**
-- 输出内容经过 **HTMLSpecialChars** 转义，防止 XSS
-- 管理员密码使用 **bcrypt** 加密存储
-- 支持配置安全响应头（X-Frame-Options、X-Content-Type-Options 等）
-
-> ⚠️ 生产部署前请务必修改 `.env` 中的 `APP_SECRET_KEY`，并更新默认管理员密码。
->
-> 如需报告安全问题，请参见 [SECURITY.md](SECURITY.md)。
-
----
-
-## 📚 文档与扩展
-
-详细文档见 [`docs/`](docs/) 目录：
-
-- [系统说明文档](docs/系统说明文档.md) - 完整功能说明
-- [AI 开发指南](docs/AI_PROJECT_GUIDE.md) - 核心类与架构说明
-- [本地环境配置](docs/本地环境配置指南.md) - 开发环境搭建
-- [部署文档](docs/deployment/DEPLOYMENT.md) - 服务器部署步骤
-- [配套 Skill 仓库](https://github.com/yaojingang/yao-geo-skills) - `geoflow-cli-ops`
-
----
-
-## 📌 当前开源仓库定位
-
-- 提供可运行的公开源码版本
-- 不附带生产数据库、上传文件和真实 API 密钥
-- 适合作为二次开发基础，或用于自建 GEO 内容站点
+本项目采用 [Apache License 2.0](LICENSE)。该协议允许个人和企业在遵守许可证声明、版权保留、修改说明、专利授权和免责声明等条款的前提下使用、修改、分发和商用 GEOFlow。
 
 ---
 

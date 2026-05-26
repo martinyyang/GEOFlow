@@ -1,52 +1,29 @@
-.env
-.env.*
-!.env.example
-
-# macOS
-.DS_Store
-**/.DS_Store
-
-# Runtime logs
-logs/*
-!logs/.htaccess
-bin/logs/*
 *.log
-*.pid
-*.pid.lock
-*.flag
-
-# Runtime database and local backups
-data/db/
-data/backups/
-*.db
-*.db-*
-*.db.*
-*.sqlite
-*.sqlite-*
-
-# Local runtime markers
-logs/.docker-ready
-data/login_attempts.json
-
-# Runtime uploads
-uploads/images/
-uploads/knowledge/
-uploads/tmp/
-
-# Local docs snapshot repo
-docs/git/repo/
-
-# Local git automation state
-bin/git/state/
-docs/git/state/
-
-# Temporary exports and backups
-*.bak
-*.tmp
-*.temp
-tmp-*.md
-tmp-*.json
-tmp-*.txt
-
-# Local GEOFlow CLI config
-.geoflow.json
+.DS_Store
+/bak
+/docker-data
+/logs
+/uploads
+.env
+.env.prod
+.env.backup
+.env.production
+.phpactor.json
+.phpunit.result.cache
+/.fleet
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/vendor
+Homestead.json
+Homestead.yaml
+Thumbs.db
