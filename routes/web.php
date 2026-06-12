@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AiPromptController;
 use App\Http\Controllers\Admin\AiSpecialPromptController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\ApiTokenController;
+use App\Http\Controllers\Admin\ArticleEditorAssetController;
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\AuthorController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -25,6 +26,8 @@ use App\Http\Controllers\Admin\LegacyController;
 use App\Http\Controllers\Admin\MaterialsController;
 use App\Http\Controllers\Admin\SecuritySettingsController;
 use App\Http\Controllers\Admin\SiteSettingsController;
+use App\Http\Controllers\Admin\SiteThemeReplicationController;
+use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Admin\TitleLibraryController;
 use App\Http\Controllers\Admin\UrlImportController;
@@ -71,6 +74,24 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
         Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('analytics', [AnalyticsController::class, 'index'])->name('analytics');
 
+        Route::prefix('system-updates')->name('system-updates.')->group(function () {
+            Route::get('/', [SystemUpdateController::class, 'index'])->name('index');
+            Route::post('check', [SystemUpdateController::class, 'check'])->name('check');
+            Route::get('runs/status', [SystemUpdateController::class, 'runsStatus'])->name('runs.status');
+            Route::get('runs/{runUuid}', [SystemUpdateController::class, 'runShow'])->name('runs.show');
+            Route::post('runs/{runUuid}/retry', [SystemUpdateController::class, 'retryRun'])->name('runs.retry');
+            Route::post('runs/{runUuid}/mark-failed', [SystemUpdateController::class, 'markRunFailed'])->name('runs.mark-failed');
+            Route::post('plan', [SystemUpdateController::class, 'plan'])->name('plan');
+            Route::post('backup', [SystemUpdateController::class, 'backup'])->name('backup');
+            Route::post('apply', [SystemUpdateController::class, 'apply'])->name('apply');
+            Route::post('plans/{runUuid}/commands/{commandIndex}/executed', [SystemUpdateController::class, 'markCommandExecuted'])
+                ->whereNumber('commandIndex')
+                ->name('commands.executed');
+            Route::get('backups/{backupUuid}', [SystemUpdateController::class, 'backupShow'])->name('backups.show');
+            Route::post('backups/{backupUuid}/files/rollback', [SystemUpdateController::class, 'rollbackFile'])->name('rollback-file');
+            Route::post('backups/{backupUuid}/rollback', [SystemUpdateController::class, 'rollback'])->name('rollback');
+        });
+
         // 任务管理（Blade 新路径）
         Route::prefix('tasks')->name('tasks.')->group(function () {
             Route::get('/', [TaskController::class, 'index'])->name('index');
@@ -115,11 +136,13 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
             Route::post('batch/restore', [ArticleController::class, 'batchRestore'])->name('batch.restore');
             Route::post('batch/force-delete', [ArticleController::class, 'batchForceDelete'])->name('batch.force-delete');
             Route::post('trash/empty', [ArticleController::class, 'emptyTrash'])->name('trash.empty');
+            Route::post('editor/wechat-html', [ArticleEditorAssetController::class, 'exportWeChatHtml'])->name('editor.wechat-html');
             Route::get('create', [ArticleController::class, 'create'])->name('create');
             Route::post('create', [ArticleController::class, 'store'])->name('store');
             Route::post('{articleId}/restore', [ArticleController::class, 'restore'])->name('restore')->whereNumber('articleId');
             Route::post('{articleId}/force-delete', [ArticleController::class, 'forceDelete'])->name('force-delete')->whereNumber('articleId');
             Route::get('{articleId}/edit', [ArticleController::class, 'edit'])->name('edit');
+            Route::post('{articleId}/editor/images/upload', [ArticleEditorAssetController::class, 'uploadImage'])->name('editor.images.upload')->whereNumber('articleId');
             Route::put('{articleId}', [ArticleController::class, 'update'])->name('update');
         });
 
@@ -246,6 +269,40 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
             Route::get('/', [SiteSettingsController::class, 'index'])->name('index');
             Route::post('/', [SiteSettingsController::class, 'update'])->name('update');
             Route::post('theme', [SiteSettingsController::class, 'updateTheme'])->name('theme');
+            Route::get('theme-replications/create', [SiteThemeReplicationController::class, 'create'])->name('theme-replications.create');
+            Route::post('theme-replications', [SiteThemeReplicationController::class, 'store'])->name('theme-replications.store');
+            Route::get('theme-replications/{replicationId}', [SiteThemeReplicationController::class, 'show'])
+                ->name('theme-replications.show')
+                ->whereNumber('replicationId');
+            Route::get('theme-replications/{replicationId}/preview/{page}', [SiteThemeReplicationController::class, 'preview'])
+                ->name('theme-replications.preview')
+                ->whereNumber('replicationId')
+                ->whereIn('page', ['home', 'category', 'article']);
+            Route::get('theme-replications/{replicationId}/assets/{assetPath}', [SiteThemeReplicationController::class, 'asset'])
+                ->name('theme-replications.assets')
+                ->whereNumber('replicationId')
+                ->where('assetPath', '.*');
+            Route::post('theme-replications/{replicationId}/retry', [SiteThemeReplicationController::class, 'retry'])
+                ->name('theme-replications.retry')
+                ->whereNumber('replicationId');
+            Route::post('theme-replications/{replicationId}/iterate', [SiteThemeReplicationController::class, 'iterate'])
+                ->name('theme-replications.iterate')
+                ->whereNumber('replicationId');
+            Route::post('theme-replications/{replicationId}/publish', [SiteThemeReplicationController::class, 'publish'])
+                ->name('theme-replications.publish')
+                ->whereNumber('replicationId');
+            Route::post('theme-replications/{replicationId}/copy', [SiteThemeReplicationController::class, 'copy'])
+                ->name('theme-replications.copy')
+                ->whereNumber('replicationId');
+            Route::post('theme-replications/{replicationId}/archive', [SiteThemeReplicationController::class, 'archive'])
+                ->name('theme-replications.archive')
+                ->whereNumber('replicationId');
+            Route::post('theme-replications/{replicationId}/drafts/delete', [SiteThemeReplicationController::class, 'deleteDrafts'])
+                ->name('theme-replications.delete-drafts')
+                ->whereNumber('replicationId');
+            Route::get('theme-replications/{replicationId}/package', [SiteThemeReplicationController::class, 'downloadPackage'])
+                ->name('theme-replications.package')
+                ->whereNumber('replicationId');
             Route::post('article-detail-ads', [SiteSettingsController::class, 'updateArticleDetailAds'])->name('ads');
             Route::get('sensitive-words', [SecuritySettingsController::class, 'index'])->name('sensitive-words');
             Route::post('sensitive-words', [SecuritySettingsController::class, 'storeSensitiveWords'])->name('sensitive-words.store');
