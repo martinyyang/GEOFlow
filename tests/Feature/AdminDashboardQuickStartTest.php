@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Support\AdminWeb;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -32,14 +33,36 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(__('admin.dashboard.automation.flow_title'))
             ->assertSee(__('admin.dashboard.automation.recommendations_title'))
             ->assertSee(__('admin.dashboard.automation.recommendations_empty'))
-            ->assertSee(__('admin.dashboard.automation.node_ai_title'))
-            ->assertSee(__('admin.dashboard.automation.node_distribution_title'))
+            ->assertDontSee('内容工程演示层')
+            ->assertDontSee('工程')
+            ->assertDontSee('�')
+            ->assertSee(__('admin.dashboard.demo_journey.title'))
+            ->assertSee(__('admin.dashboard.demo_journey.assets_title'))
+            ->assertSee(__('admin.dashboard.demo_journey.quality_title'))
+            ->assertSee(__('admin.dashboard.demo_journey.observation_title'))
+            ->assertSee(__('admin.dashboard.automation.node_prompt_graph_title'))
+            ->assertSee(__('admin.dashboard.automation.node_content_title'))
+            ->assertSee(__('admin.dashboard.automation.node_authority_distribution_title'))
+            ->assertSee(__('admin.dashboard.automation.step_label', ['step' => '01']))
+            ->assertSee(__('admin.dashboard.automation.step_label', ['step' => '08']))
+            ->assertSee('id="content-engineering-step-01"', false)
+            ->assertSee('id="content-engineering-step-08"', false)
+            ->assertSeeInOrder([
+                __('admin.dashboard.automation.node_prompt_graph_title'),
+                __('admin.dashboard.automation.node_knowledge_assets_title'),
+                __('admin.dashboard.automation.node_evidence_structure_title'),
+                __('admin.dashboard.automation.node_engineering_task_title'),
+                __('admin.dashboard.automation.node_content_title'),
+                __('admin.dashboard.automation.node_quality_gate_title'),
+                __('admin.dashboard.automation.node_authority_distribution_title'),
+                __('admin.dashboard.automation.node_measurement_title'),
+            ])
             ->assertSee(__('admin.dashboard.automation.lane_single_title'))
             ->assertSee(__('admin.dashboard.automation.lane_multi_title'))
             ->assertSee(__('admin.dashboard.automation.lane_feedback_title'))
             ->assertSee(__('admin.dashboard.navigation.ai_config_title'))
             ->assertSee(__('admin.dashboard.navigation.materials_title'))
-            ->assertSee('配置素材库')
+            ->assertSee('知识资产与证据库')
             ->assertDontSee('建设素材库')
             ->assertSee(__('admin.dashboard.navigation.create_task_title'))
             ->assertSee(__('admin.dashboard.navigation.articles_title'))
@@ -57,6 +80,13 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(__('admin.dashboard.quick_start.api_title'))
             ->assertSee(__('admin.dashboard.quick_start.material_title'))
             ->assertSee(__('admin.dashboard.quick_start.task_title'))
+            ->assertSee(__('admin.analytics.navigation.overview'))
+            ->assertSee(__('admin.analytics.navigation.operations'))
+            ->assertSee(__('admin.analytics.navigation.content'))
+            ->assertSee(__('admin.analytics.navigation.traffic'))
+            ->assertSee(__('admin.analytics.navigation.ai_visibility'))
+            ->assertSee(__('admin.analytics.navigation.leads'))
+            ->assertSee(__('admin.analytics.navigation.distribution'))
             ->assertDontSee(__('admin.dashboard.analytics_card_title'))
             ->assertDontSee(__('admin.dashboard.analytics_card_button'))
             ->assertDontSee(__('admin.dashboard.category_distribution'))
@@ -73,11 +103,17 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(route('admin.keyword-libraries.index'), false)
             ->assertSee(route('admin.image-libraries.index'), false)
             ->assertSee(route('admin.authors.index'), false)
+            ->assertSee(route('admin.materials.index'), false)
             ->assertSee(route('admin.tasks.create'), false)
             ->assertSee(route('admin.articles.index'), false)
             ->assertSee(route('admin.site-settings.index'), false)
             ->assertSee(route('admin.dashboard'), false)
             ->assertSee(route('admin.analytics'), false)
+            ->assertSee(route('admin.analytics.content'), false)
+            ->assertSee(route('admin.analytics.traffic'), false)
+            ->assertSee(route('admin.analytics.ai-visibility'), false)
+            ->assertSee(route('admin.analytics.leads'), false)
+            ->assertSee(route('admin.analytics.distribution'), false)
             ->assertSee(route('admin.ai-prompts'), false)
             ->assertSee(route('admin.ai-special-prompts'), false)
             ->assertSee(route('admin.admin-users.index'), false)
@@ -106,6 +142,108 @@ class AdminDashboardQuickStartTest extends TestCase
         $this->assertStringNotContainsString(__('admin.dashboard.automation.metric_ai_today', ['count' => 74]), $html);
     }
 
+    public function test_dashboard_description_copy_does_not_end_with_sentence_periods(): void
+    {
+        foreach (['zh_CN', 'en'] as $locale) {
+            app()->setLocale($locale);
+
+            $this->assertDashboardDescriptionsDoNotEndWithSentencePeriods(
+                trans('admin.dashboard'),
+                'admin.dashboard'
+            );
+        }
+    }
+
+    public function test_dashboard_omits_duplicate_header_actions_and_analytics_refresh_aligns_with_navigation(): void
+    {
+        $admin = Admin::query()->create([
+            'username' => 'dashboard_header_alignment_admin',
+            'password' => 'secret-123',
+            'email' => 'dashboard-header-alignment@example.com',
+            'display_name' => 'Dashboard Header Alignment Admin',
+            'role' => 'super_admin',
+            'status' => 'active',
+        ]);
+
+        $dashboard = $this->actingAs($admin, 'admin')->get(route('admin.dashboard'))->assertOk();
+        $dashboardDocument = new \DOMDocument;
+        $dashboardDocument->loadHTML($dashboard->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_NONET);
+        $dashboardXPath = new \DOMXPath($dashboardDocument);
+        $dashboardHeadings = $dashboardXPath->query('//h1');
+
+        $this->assertNotFalse($dashboardHeadings);
+        $this->assertSame(1, $dashboardHeadings->length);
+
+        $dashboardToolbars = $dashboardXPath->query('//*[@data-analytics-page-toolbar]');
+
+        $this->assertNotFalse($dashboardToolbars);
+        $this->assertSame(1, $dashboardToolbars->length);
+
+        $dashboardToolbar = $dashboardToolbars->item(0);
+
+        $this->assertInstanceOf(\DOMElement::class, $dashboardToolbar);
+        $this->assertSame(1, $dashboardXPath->query('.//*[@data-analytics-navigation]', $dashboardToolbar)?->length);
+        $this->assertSame(0, $dashboardXPath->query('.//button[@onclick="location.reload()"]', $dashboardToolbar)?->length);
+        $this->assertSame(0, $dashboardXPath->query('.//a[@href="'.route('admin.tasks.create').'"]', $dashboardToolbar)?->length);
+
+        $analytics = $this->get(route('admin.analytics'))->assertOk();
+        $analyticsDocument = new \DOMDocument;
+        $analyticsDocument->loadHTML($analytics->getContent(), LIBXML_NOERROR | LIBXML_NOWARNING | LIBXML_NONET);
+        $analyticsXPath = new \DOMXPath($analyticsDocument);
+        $toolbars = $analyticsXPath->query('//*[@data-analytics-page-toolbar]');
+
+        $this->assertNotFalse($toolbars);
+        $this->assertSame(1, $toolbars->length);
+
+        $toolbar = $toolbars->item(0);
+
+        $this->assertInstanceOf(\DOMElement::class, $toolbar);
+        $this->assertContains('items-end', preg_split('/\s+/', trim($toolbar->getAttribute('class'))));
+        $navigation = $analyticsXPath->query('.//*[@data-analytics-navigation]', $toolbar)?->item(0);
+
+        $this->assertInstanceOf(\DOMElement::class, $navigation);
+        $this->assertNotContains('border-b', preg_split('/\s+/', trim($navigation->getAttribute('class'))));
+        $this->assertSame(1, $analyticsXPath->query('.//button[@onclick="location.reload()"]', $toolbar)?->length);
+
+        $header = $toolbar->parentNode;
+
+        $this->assertInstanceOf(\DOMElement::class, $header);
+        $this->assertContains('mb-8', preg_split('/\s+/', trim($header->getAttribute('class'))));
+    }
+
+    /**
+     * @param  array<string, mixed>  $copy
+     */
+    private function assertDashboardDescriptionsDoNotEndWithSentencePeriods(array $copy, string $path): void
+    {
+        foreach ($copy as $key => $value) {
+            $nextPath = $path.'.'.$key;
+
+            if (is_array($value)) {
+                $this->assertDashboardDescriptionsDoNotEndWithSentencePeriods($value, $nextPath);
+
+                continue;
+            }
+
+            if (! is_string($value) || ! $this->isDashboardDescriptionKey((string) $key)) {
+                continue;
+            }
+
+            $this->assertFalse(
+                str_ends_with($value, '。') || str_ends_with($value, '.'),
+                "{$nextPath} should not end with sentence punctuation."
+            );
+        }
+    }
+
+    private function isDashboardDescriptionKey(string $key): bool
+    {
+        return $key === 'desc'
+            || $key === 'subtitle'
+            || $key === 'recommendations_empty'
+            || str_ends_with($key, '_desc');
+    }
+
     public function test_welcome_modal_dismiss_url_is_relative_when_app_url_differs_from_origin(): void
     {
         config(['app.url' => 'https://configured.example']);
@@ -122,11 +260,38 @@ class AdminDashboardQuickStartTest extends TestCase
         $response = $this->actingAs($admin, 'admin')
             ->get(route('admin.dashboard'));
 
-        $dismissPath = route('admin.welcome.dismiss', [], false);
+        $dismissPath = AdminWeb::routePath('admin.welcome.dismiss');
         $escapedDismissPath = str_replace('/', '\\/', $dismissPath);
         $html = $response->getContent();
 
         $response->assertOk();
+        $this->assertStringContainsString($escapedDismissPath, $html);
+        $this->assertStringNotContainsString('https:\/\/configured.example'.$escapedDismissPath, $html);
+        $this->assertStringNotContainsString('https://configured.example'.$dismissPath, $html);
+    }
+
+    public function test_welcome_modal_dismiss_url_keeps_configured_subdirectory_without_absolute_host(): void
+    {
+        config(['app.url' => 'https://configured.example/geoflow']);
+
+        $admin = Admin::query()->create([
+            'username' => 'dashboard_subdirectory_admin',
+            'password' => 'secret-123',
+            'email' => 'dashboard-subdirectory@example.com',
+            'display_name' => 'Dashboard Subdirectory Admin',
+            'role' => 'super_admin',
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get(route('admin.dashboard'));
+
+        $dismissPath = AdminWeb::routePath('admin.welcome.dismiss');
+        $escapedDismissPath = str_replace('/', '\\/', $dismissPath);
+        $html = $response->getContent();
+
+        $response->assertOk();
+        $this->assertStringStartsWith('/geoflow/', $dismissPath);
         $this->assertStringContainsString($escapedDismissPath, $html);
         $this->assertStringNotContainsString('https:\/\/configured.example'.$escapedDismissPath, $html);
         $this->assertStringNotContainsString('https://configured.example'.$dismissPath, $html);
@@ -184,6 +349,10 @@ class AdminDashboardQuickStartTest extends TestCase
         $this->assertStringContainsString(__('admin.footer.help_docs_link'), $zhHtml);
         $this->assertStringContainsString('https://github.com/yaojingang/GEOFlow/wiki', $zhHtml);
         $this->assertStringNotContainsString('https://github.com/yaojingang/GEOFlow/wiki/Home-English', $zhHtml);
+        $this->assertStringContainsString(
+            'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG.md',
+            $zhHtml,
+        );
 
         session(['locale' => 'en']);
 
@@ -194,5 +363,9 @@ class AdminDashboardQuickStartTest extends TestCase
 
         $this->assertStringContainsString('Help docs', $enHtml);
         $this->assertStringContainsString('https://github.com/yaojingang/GEOFlow/wiki/Home-English', $enHtml);
+        $this->assertStringContainsString(
+            'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG_en.md',
+            $enHtml,
+        );
     }
 }

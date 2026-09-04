@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Services\Site\SiteScopedArticleQuery;
+use App\Services\Site\SiteUrlGenerator;
 use App\Support\Site\ArticleHtmlPresenter;
 use App\Support\Site\ArticleStickyAdPicker;
+use App\Support\Site\ArticleTextAdPicker;
 use App\Support\Site\SiteSettingsBag;
 use App\Support\Site\SiteThemeViewResolver;
 use Illuminate\View\View;
@@ -16,10 +19,14 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  */
 class ArticleController extends Controller
 {
+    public function __construct(
+        private readonly SiteScopedArticleQuery $siteArticles,
+        private readonly SiteUrlGenerator $urls,
+    ) {}
+
     public function show(string $slug): View
     {
-        $article = Article::query()
-            ->published()
+        $article = $this->siteArticles->query()
             ->where('slug', $slug)
             ->with(['category', 'author'])
             ->first();
@@ -34,6 +41,7 @@ class ArticleController extends Controller
         $map = SiteSettingsBag::all();
         $siteTitle = (string) ($map['site_name'] ?? config('geoflow.site_name', config('app.name')));
         $siteDescription = (string) ($map['site_description'] ?? config('geoflow.site_description', ''));
+        $siteKeywords = (string) ($map['site_keywords'] ?? config('geoflow.site_keywords', ''));
 
         $rawContent = (string) $article->content;
         $body = ArticleHtmlPresenter::stripLeadingTitleHeading($rawContent, (string) $article->title);
@@ -42,20 +50,23 @@ class ArticleController extends Controller
             $excerpt = ArticleHtmlPresenter::stripLeadingTitleHeading($excerpt, (string) $article->title);
         }
 
-        $contentHtml = ArticleHtmlPresenter::markdownToHtml($body);
+        $contentHtml = ArticleTextAdPicker::injectIntoContentHtml(
+            ArticleHtmlPresenter::markdownToHtml($body)
+        );
+        $excerptPlain = $excerpt !== '' ? ArticleHtmlPresenter::cardSummary($article, 160) : '';
 
         $tags = $this->keywordTags((string) $article->keywords);
 
-        $related = Article::query()
-            ->published()
+        $related = $this->siteArticles->query()
             ->where('category_id', $article->category_id)
             ->whereKeyNot($article->id)
             ->inRandomOrder()
             ->limit(6)
             ->get(['id', 'title', 'slug']);
 
-        $pageTitle = $article->title.' - '.$siteTitle;
-        $pageDescription = $excerpt !== '' ? $excerpt : ArticleHtmlPresenter::cardSummary($article, 160);
+        $pageTitle = (string) $article->title;
+        $pageDescription = $excerptPlain !== '' ? $excerptPlain : ArticleHtmlPresenter::cardSummary($article, 160);
+        $pageKeywords = implode(',', $tags);
 
         $stickyAd = ArticleStickyAdPicker::firstEnabled();
 
@@ -63,16 +74,18 @@ class ArticleController extends Controller
             'activeNav' => 'article',
             'article' => $article,
             'contentHtml' => $contentHtml,
-            'excerptPlain' => $excerpt,
+            'excerptPlain' => $excerptPlain,
             'tags' => $tags,
             'relatedArticles' => $related,
             'siteTitle' => $siteTitle,
             'siteDescription' => $siteDescription,
-            'siteKeywords' => '',
+            'siteKeywords' => $siteKeywords,
             'pageTitle' => $pageTitle,
             'pageDescription' => $pageDescription,
+            'pageKeywords' => $pageKeywords,
+            'pageOgType' => 'article',
             'stickyAd' => $stickyAd,
-            'canonicalUrl' => route('site.article', $article->slug),
+            'canonicalUrl' => $this->urls->article($article),
         ]);
     }
 

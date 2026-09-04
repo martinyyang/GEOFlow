@@ -12,9 +12,10 @@ use App\Services\Admin\SiteThemeReplication\ThemeReplicationPublishService;
 use App\Services\Admin\SiteThemeReplicationService;
 use App\Support\AdminWeb;
 use App\Support\Site\SiteThemeCatalog;
-use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use InvalidArgumentException;
@@ -33,7 +34,7 @@ class SiteThemeReplicationController extends Controller
             'adminSiteName' => AdminWeb::siteName(),
             'availableThemes' => $themeCatalog->all(),
             'activeChatModels' => $replicationService->activeChatModels(),
-            'deploymentDiagnostics' => $replicationService->deploymentDiagnostics(),
+            'schemaReady' => $replicationService->isSchemaReady(),
         ]);
     }
 
@@ -62,6 +63,12 @@ class SiteThemeReplicationController extends Controller
             'ai_model_id.exists' => __('admin.theme_replication.validation.ai_model_required'),
             'compliance_ack.accepted' => __('admin.theme_replication.validation.compliance_ack'),
         ]);
+
+        if (! $replicationService->isSchemaReady()) {
+            return back()
+                ->withErrors(['theme_replication' => __('admin.theme_replication.message.migration_required')])
+                ->withInput();
+        }
 
         try {
             $themeId = $replicationService->normalizeThemeId((string) $payload['theme_id']);
@@ -103,6 +110,10 @@ class SiteThemeReplicationController extends Controller
             return back()
                 ->withErrors(['theme_id' => $e->getMessage()])
                 ->withInput();
+        } catch (RuntimeException $e) {
+            return back()
+                ->withErrors(['theme_replication' => $e->getMessage()])
+                ->withInput();
         }
 
         RunSiteThemeReplicationJob::dispatch((int) $replication->id)->onQueue('theme-replication');
@@ -127,6 +138,7 @@ class SiteThemeReplicationController extends Controller
             'rows' => [],
             'counts' => ['added' => 0, 'modified' => 0, 'removed' => 0, 'unchanged' => 0],
         ];
+        $timelineLogs = $replication->logs()->oldest('id')->limit(100)->get();
 
         return view('admin.site-theme-replications.show', [
             'pageTitle' => __('admin.theme_replication.detail_title'),
@@ -135,10 +147,20 @@ class SiteThemeReplicationController extends Controller
             'replication' => $replication,
             'latestVersion' => $hasCurrentDraft ? $replication->versions()->latest('version')->first() : null,
             'logs' => $replication->logs()->latest('id')->limit(30)->get(),
+            'progress' => $replicationService->progressSnapshot($replication, $timelineLogs),
             'fileDiff' => $hasCurrentDraft ? $replicationService->versionDiff($replication) : $emptyFileDiff,
             'failureAdvice' => $replicationService->failureAdvice($replication),
-            'deploymentDiagnostics' => $replicationService->deploymentDiagnostics(),
         ]);
+    }
+
+    public function status(
+        int $replicationId,
+        SiteThemeReplicationService $replicationService
+    ): JsonResponse {
+        $replication = SiteThemeReplication::query()->findOrFail($replicationId);
+        $logs = $replication->logs()->oldest('id')->limit(100)->get();
+
+        return response()->json($replicationService->progressSnapshot($replication, $logs));
     }
 
     public function retry(
@@ -161,24 +183,14 @@ class SiteThemeReplicationController extends Controller
             ->with('message', __('admin.theme_replication.message.retried'));
     }
 
-    public function preview(int $replicationId, string $page, ThemePreviewRenderer $renderer): View
+    public function preview(int $replicationId, string $page, ThemePreviewRenderer $renderer): Response
     {
         $replication = SiteThemeReplication::query()->findOrFail($replicationId);
         if (! $replication->isPreviewReady()) {
             abort(404, __('admin.theme_replication.error.preview_unavailable'));
         }
 
-        return $renderer->render($replication, $page);
-    }
-
-    public function asset(int $replicationId, string $assetPath, ThemePreviewRenderer $renderer): Response
-    {
-        $replication = SiteThemeReplication::query()->findOrFail($replicationId);
-        if (! $replication->isPreviewReady()) {
-            abort(404, __('admin.theme_replication.error.preview_unavailable'));
-        }
-
-        return $renderer->assetResponse($replication, $assetPath);
+        return $renderer->render($page);
     }
 
     public function iterate(int $replicationId, Request $request, SiteThemeReplicationService $replicationService): RedirectResponse
@@ -294,10 +306,10 @@ class SiteThemeReplicationController extends Controller
         ThemeReplicationPackageService $packageService
     ): BinaryFileResponse|RedirectResponse {
         $replication = SiteThemeReplication::query()->findOrFail($replicationId);
-        if (! $replication->isPreviewReady()) {
+        if (! $replication->canPackage()) {
             return redirect()
                 ->route('admin.site-settings.theme-replications.show', ['replicationId' => $replicationId])
-                ->withErrors(__('admin.theme_replication.error.preview_unavailable'));
+                ->withErrors(__('admin.theme_replication.message.publish_unavailable'));
         }
 
         try {

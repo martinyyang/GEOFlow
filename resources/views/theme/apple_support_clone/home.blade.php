@@ -1,7 +1,9 @@
 @extends('theme.apple_support_clone.layout')
 
 @section('theme_content')
-    @php
+        @include("site.partials.homepage-modules", ["homepageModules" => $homepageModules ?? [], "homepageStyle" => $homepageStyle ?? [], "showHomepageModules" => $showHomepageModules ?? false, "articles" => $articles ?? collect(), "featuredArticles" => $featuredArticles ?? collect(), "hotArticles" => $hotArticles ?? collect()])
+
+@php
         $isLanding = $search === '' && ! $category && ! $categoryMissing && (int) request('page', 1) === 1;
     @endphp
 
@@ -24,7 +26,7 @@
                     </form>
                     <div class="as-action-row" aria-label="primary actions">
                         <a href="#latest-articles">{{ __('site.home_latest') }}</a>
-                        <a href="{{ route('site.archive') }}">{{ __('site.archive_title') }}</a>
+                        <a href="{{ route('site.about') }}">关于 GEOFlow</a>
                     </div>
                 </div>
             </section>
