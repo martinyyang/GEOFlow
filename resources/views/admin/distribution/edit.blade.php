@@ -352,6 +352,18 @@
                             </div>
                         </div>
 
+                        <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+                            <div>
+                                <label for="site_language" class="block text-sm font-medium text-gray-700">{{ __('admin.site_settings.field_site_language') }}</label>
+                                @php($siteLanguage = old('site_language', $remoteSettings['site_language'] ?? 'zh'))
+                                <select id="site_language" name="site_language" class="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <option value="zh" @selected($siteLanguage !== 'en')>{{ __('admin.site_settings.site_language_zh') }}</option>
+                                    <option value="en" @selected($siteLanguage === 'en')>{{ __('admin.site_settings.site_language_en') }}</option>
+                                </select>
+                                <p class="mt-1 text-xs text-gray-500">{{ __('admin.site_settings.site_language_help') }}</p>
+                            </div>
+                        </div>
+
                         <div class="mt-6 border-t border-gray-200 pt-5">
                             <h3 class="text-sm font-semibold text-gray-900">{{ __('admin.site_settings.section_seo') }}</h3>
                             <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
