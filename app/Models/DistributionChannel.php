@@ -111,6 +111,7 @@ class DistributionChannel extends Model
             'seo_description_template' => trim((string) ($stored['seo_description_template'] ?? '{description}')),
             'featured_limit' => min(100, max(1, (int) ($stored['featured_limit'] ?? 6))),
             'per_page' => min(200, max(1, (int) ($stored['per_page'] ?? 12))),
+            'site_language' => self::normalizeSiteLanguage($stored['site_language'] ?? null),
         ] + $this->resolvedFrontendExperienceSettings();
     }
 
@@ -282,6 +283,15 @@ class DistributionChannel extends Model
     public static function frontendExperienceModes(): array
     {
         return self::FRONTEND_EXPERIENCE_MODES;
+    }
+
+    /**
+     * Language of the target site's built-in chrome (nav, breadcrumb, buttons).
+     * Anything other than 'en' falls back to 'zh', the historical default.
+     */
+    public static function normalizeSiteLanguage(mixed $language): string
+    {
+        return strtolower(trim((string) ($language ?? ''))) === 'en' ? 'en' : 'zh';
     }
 
     public static function normalizeFrontendExperienceMode(mixed $mode): string
