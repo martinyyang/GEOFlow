@@ -4929,7 +4929,7 @@ return [
         'field_site_language' => '站点界面语言',
         'site_language_zh' => '中文（默认）',
         'site_language_en' => '英文',
-        'site_language_help' => '目标站点内置导航、面包屑和按钮文字的语言（如 首页 / 阅读全文 → Home / Read more）。目标站点需运行包含此选项的站点包并同步站点设置后生效。',
+        'site_language_help' => '目标站点内置导航、面包屑和按钮文字的语言（如 首页 / 阅读全文 → Home / Read more）。目标站点需运行包含此选项的站点包并同步站点设置后生效',
         'section_analytics' => '统计分析',
         'analytics_help' => '将会插入到页面 <head> 标签中',
         'analytics_super_admin_only' => '统计代码会直接插入前台页面，只有超级管理员可以修改。',
