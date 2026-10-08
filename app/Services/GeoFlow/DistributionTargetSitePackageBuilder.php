@@ -67,6 +67,7 @@ class DistributionTargetSitePackageBuilder
             'seo_description_template' => $siteSettings['seo_description_template'],
             'featured_limit' => $siteSettings['featured_limit'],
             'per_page' => $siteSettings['per_page'],
+            'site_language' => $this->siteLanguage($siteSettings),
             'homepage_style' => $siteSettings['homepage_style'] ?? [],
             'homepage_modules' => $siteSettings['homepage_modules'] ?? [],
             'home_carousel_slides' => $siteSettings['home_carousel_slides'] ?? [],
@@ -99,6 +100,7 @@ class DistributionTargetSitePackageBuilder
             ."    'seo_description_template' => ".var_export($config['seo_description_template'], true).",\n"
             ."    'featured_limit' => ".$config['featured_limit'].",\n"
             ."    'per_page' => ".$config['per_page'].",\n"
+            .($config['site_language'] !== 'zh' ? "    'site_language' => ".var_export($config['site_language'], true).",\n" : '')
             ."    'homepage_style' => ".var_export($config['homepage_style'], true).",\n"
             ."    'homepage_modules' => ".var_export($config['homepage_modules'], true).",\n"
             ."    'home_carousel_slides' => ".var_export($config['home_carousel_slides'], true).",\n"
@@ -166,9 +168,10 @@ HTACCESS;
         $settings['active_theme'] = (string) ($channel->template_key ?? '');
         $themeClass = $this->targetThemeClass($settings);
         $assetVersion = $this->targetAssetVersion($channel);
-        $seo = $this->initialSeoPayload($channel, $settings, '首页');
+        $isEnglish = $this->siteLanguage($settings) === 'en';
+        $seo = $this->initialSeoPayload($channel, $settings, $isEnglish ? 'Home' : '首页');
 
-        $head = '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+        $head = '<!DOCTYPE html><html lang="'.($isEnglish ? 'en' : 'zh-CN').'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             .'<title>'.$this->h($seo['page_title']).'</title>'
             .'<meta name="description" content="'.$this->h($seo['description']).'">';
         if ($seo['keywords'] !== '') {
@@ -198,7 +201,7 @@ HTACCESS;
             .'<link rel="stylesheet" href="assets/css/site.css?v='.$assetVersion.'"><script defer src="assets/js/site.js?v='.$assetVersion.'"></script>'
             .'</head><body class="'.$this->h($themeClass).'"><header><div class="wrap bar"><div class="brand">'.$this->h($siteName).'</div></div></header><main class="wrap">'
             .$experienceHtml
-            .'<div class="empty">暂无文章。请先从 GEOFlow 发布一篇绑定此渠道的文章。</div></main>'
+            .'<div class="empty">'.($isEnglish ? 'No articles yet. Publish an article bound to this channel from GEOFlow first.' : '暂无文章。请先从 GEOFlow 发布一篇绑定此渠道的文章。').'</div></main>'
             .'<footer><div class="wrap">'.$this->h($copyright).'</div></footer></body></html>';
     }
 
@@ -437,6 +440,17 @@ HTACCESS;
      * @param  array<string, mixed>  $settings
      * @return array{page_title:string,description:string,keywords:string,canonical_url:string,og_type:string}
      */
+    /**
+     * Front-end chrome language of the target site: 'zh' (default, unchanged
+     * output for existing sites) or 'en'.
+     *
+     * @param  array<string,mixed>  $settings
+     */
+    private function siteLanguage(array $settings): string
+    {
+        return DistributionChannel::normalizeSiteLanguage($settings['site_language'] ?? null);
+    }
+
     private function initialSeoPayload(DistributionChannel $channel, array $settings, string $title): array
     {
         $siteName = (string) ($settings['site_name'] ?? '');
@@ -663,6 +677,21 @@ if (! is_array($config)) {
 function h(?string $value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+function normalizeSiteLanguage($value): string
+{
+    return strtolower(trim((string) $value)) === 'en' ? 'en' : 'zh';
+}
+
+function siteLanguage(array $config): string
+{
+    return (string) (siteSettings($config)['site_language'] ?? 'zh');
+}
+
+function siteText(array $config, string $zh, string $en): string
+{
+    return siteLanguage($config) === 'en' ? $en : $zh;
 }
 
 function jsonResponse(int $status, array $payload): void
@@ -1103,6 +1132,7 @@ function normalizeSiteSettings(array $settings, array $config = []): array
         'seo_description_template' => trim((string) ($settings['seo_description_template'] ?? $config['seo_description_template'] ?? '{description}')),
         'featured_limit' => min(100, max(1, (int) ($settings['featured_limit'] ?? $config['featured_limit'] ?? 6))),
         'per_page' => min(200, max(1, (int) ($settings['per_page'] ?? $config['per_page'] ?? 12))),
+        'site_language' => normalizeSiteLanguage($settings['site_language'] ?? $config['site_language'] ?? 'zh'),
         'homepage_style' => normalizeHomepageStyle($settings['homepage_style'] ?? $config['homepage_style'] ?? []),
         'homepage_modules' => normalizeHomepageModules($settings['homepage_modules'] ?? $config['homepage_modules'] ?? [], false),
         'home_carousel_slides' => normalizeHomeCarouselSlides($settings['home_carousel_slides'] ?? $config['home_carousel_slides'] ?? []),
@@ -2125,7 +2155,8 @@ function pageHeader(array $config, string $title, array $pageMeta = []): void
     }
     $seo = pageSeoPayload($settings, $title, $pageMeta);
     $homeUrl = frontSitePath($config, '/');
-    echo '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+    $isEnglish = ($settings['site_language'] ?? 'zh') === 'en';
+    echo '<!DOCTYPE html><html lang="'.($isEnglish ? 'en' : 'zh-CN').'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
     echo '<title>'.h((string) $seo['page_title']).'</title><meta name="description" content="'.h((string) $seo['description']).'">';
     $keywords = (string) $seo['keywords'];
     if ($keywords !== '') {
@@ -2144,7 +2175,7 @@ function pageHeader(array $config, string $title, array $pageMeta = []): void
     }
     echo '<link rel="stylesheet" href="'.h(frontVersionedAssetPath($config, '/assets/css/site.css')).'">';
     echo '<script defer src="'.h(frontVersionedAssetPath($config, '/assets/js/site.js')).'"></script>';
-    echo '</head><body class="'.h($themeClass).'"><header><div class="wrap bar"><a class="brand" href="'.h($homeUrl).'">'.h($siteName).'</a><nav><a href="'.h($homeUrl).'">首页</a></nav></div></header><main class="wrap">';
+    echo '</head><body class="'.h($themeClass).'"><header><div class="wrap bar"><a class="brand" href="'.h($homeUrl).'">'.h($siteName).'</a><nav><a href="'.h($homeUrl).'">'.($isEnglish ? 'Home' : '首页').'</a></nav></div></header><main class="wrap">';
 }
 
 function pageFooter(array $config): void
@@ -2454,7 +2485,7 @@ function renderHomePage(array $config): void
 
     $siteName = (string) $settings['site_name'];
     $articles = array_slice(loadArticles($config), 0, (int) $settings['per_page']);
-    pageHeader($config, '首页');
+    pageHeader($config, siteText($config, '首页', 'Home'));
     echo jsonLdScript([
         "@context"=>"https://schema.org",
         "@type"=>"WebSite",
@@ -2468,7 +2499,7 @@ function renderHomePage(array $config): void
         echo '<section class="hero"><h1>'.h($siteName).'</h1><p>'.h((string) $settings['site_description']).'</p></section>';
     }
     if ($articles === []) {
-        echo '<div class="card empty">暂无文章。请先从 GEOFlow 发布一篇绑定此渠道的文章。</div>';
+        echo '<div class="card empty">'.h(siteText($config, '暂无文章。请先从 GEOFlow 发布一篇绑定此渠道的文章。', 'No articles yet. Publish an article bound to this channel from GEOFlow first.')).'</div>';
         pageFooter($config);
         return;
     }
@@ -2484,7 +2515,7 @@ function renderHomePage(array $config): void
         echo '<article class="card"><div class="meta"><span class="chip">'.h($category).'</span><span>'.h($publishedAt).'</span></div>';
         echo '<h2><a href="'.h($articleUrl).'">'.h($title).'</a></h2>';
         echo '<p class="summary">'.h($summary !== '' ? $summary : mb_substr(strip_tags((string) ($article['content'] ?? '')), 0, 160)).'</p>';
-        echo '<a class="read" href="'.h($articleUrl).'">阅读全文</a></article>';
+        echo '<a class="read" href="'.h($articleUrl).'">'.h(siteText($config, '阅读全文', 'Read more')).'</a></article>';
     }
     echo '</section>';
     pageFooter($config);
@@ -2596,7 +2627,7 @@ function renderFashionHomePage(array $config, array $settings): void
     $featured = array_slice($articles, 0, min(3, count($articles)));
     $latest = array_slice($articles, 0);
 
-    pageHeader($config, '首页');
+    pageHeader($config, siteText($config, '首页', 'Home'));
     echo jsonLdScript([
         "@context"=>"https://schema.org",
         "@type"=>"WebSite",
@@ -2679,8 +2710,8 @@ function renderArticlePage(array $config, string $slug): void
     $article = findArticle($config, $slug);
     if (! $article) {
         http_response_code(404);
-        pageHeader($config, '文章不存在');
-        echo '<a class="back" href="'.h(frontSitePath($config, '/')).'">返回首页</a><div class="card empty">文章不存在。</div>';
+        pageHeader($config, siteText($config, '文章不存在', 'Article not found'));
+        echo '<a class="back" href="'.h(frontSitePath($config, '/')).'">'.h(siteText($config, '返回首页', 'Back to Home')).'</a><div class="card empty">'.h(siteText($config, '文章不存在。', 'Article not found.')).'</div>';
         pageFooter($config);
         return;
     }
@@ -2718,15 +2749,16 @@ function renderArticlePage(array $config, string $slug): void
         "@context"=>"https://schema.org",
         "@type"=>"BreadcrumbList",
         "itemListElement"=>[
-            ["@type"=>"ListItem", "position"=>1, "name"=>"首页", "item"=>frontSiteUrl($config, '/')],
+            ["@type"=>"ListItem", "position"=>1, "name"=>siteText($config, '首页', 'Home'), "item"=>frontSiteUrl($config, '/')],
             ["@type"=>"ListItem", "position"=>2, "name"=>$title, "item"=>frontSiteUrl($config, '/article/'.rawurlencode($slug))],
         ],
     ]);
     $themeClass = themeClass($settings);
     $isFashion = $themeClass === 'target-theme-fashion';
     $isApparel = $themeClass === 'target-theme-apparel';
+    $isEnglish = ($settings['site_language'] ?? 'zh') === 'en';
     echo $isApparel ? '<div class="asi-shell asi-article-layout"><main class="asi-article-column"><nav class="asi-breadcrumb"><a href="'.h(frontSitePath($config, '/')).'">Latest</a><span>/</span><span>'.h($category).'</span></nav>' : '';
-    echo '<a class="back" href="'.h(frontSitePath($config, '/')).'">'.($isFashion || $isApparel ? 'Back to Reports' : '返回首页').'</a><article class="'.($isApparel ? 'asi-article' : 'card detail').'">';
+    echo '<a class="back" href="'.h(frontSitePath($config, '/')).'">'.($isFashion || $isApparel ? 'Back to Reports' : ($isEnglish ? 'Back to Home' : '返回首页')).'</a><article class="'.($isApparel ? 'asi-article' : 'card detail').'">';
     if ($isFashion) {
         echo '<div class="fashion-article-kicker"><span>'.h($category).'</span><time>'.h($publishedAt).'</time></div>';
     } elseif ($isApparel) {
