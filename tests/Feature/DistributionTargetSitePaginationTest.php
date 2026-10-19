@@ -171,7 +171,7 @@ PHP
             // 4. GET /blog/page/4 returns 404
             $page4Response = Http::timeout(3)->get($endpointUrl.'/page/4');
             $this->assertSame(404, $page4Response->status());
-            $this->assertStringContainsString('页面不存在。', $page4Response->body());
+            $this->assertStringContainsString('Page not found.', $page4Response->body());
 
             // 5. GET /blog/page/1 returns 301 with Location /blog/
             $page1Redirect = Http::withoutRedirecting()->timeout(3)->get($endpointUrl.'/page/1');
@@ -411,7 +411,7 @@ PHP
 
                 $this->assertStringContainsString('class="pagination"', $page1);
                 $this->assertStringContainsString('class="pagination"', $page2);
-                $this->assertStringContainsString('页面不存在。', $page99);
+                $this->assertStringContainsString('Page not found.', $page99);
 
                 if ($templateKey === 'apparel-sourcing-intelligence') {
                     $this->assertStringContainsString('class="asi-lead"', $page1);
@@ -420,7 +420,7 @@ PHP
                 } else {
                     $this->assertStringContainsString('Vanguard Choice', $page1);
                     $this->assertStringNotContainsString('Vanguard Choice', $page2);
-                    $this->assertStringContainsString('首页 - 第 2 页', $page2);
+                    $this->assertStringContainsString('Blog - Page 2', $page2);
                 }
             } finally {
                 if (is_file($package['path'])) {
