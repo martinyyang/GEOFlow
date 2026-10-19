@@ -680,6 +680,16 @@ function h(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
+function normalizeHtmlLangValue(mixed $lang): string
+{
+    $value = trim((string) ($lang ?? ''));
+    if ($value === '' || preg_match('/^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})?$/', $value) !== 1) {
+        return '';
+    }
+
+    return $value;
+}
+
 function normalizeSiteLanguage($value): string
 {
     return strtolower(trim((string) $value)) === 'en' ? 'en' : 'zh';
@@ -690,9 +700,29 @@ function siteLanguage(array $config): string
     return (string) (siteSettings($config)['site_language'] ?? 'zh');
 }
 
+function htmlLang(array $config, string $themeDefault = 'zh-CN'): string
+{
+    $settings = siteSettings($config);
+    $htmlLang = (string) ($settings['html_lang'] ?? '');
+    if ($htmlLang !== '') {
+        return $htmlLang;
+    }
+
+    if (siteLanguage($config) === 'en') {
+        return 'en';
+    }
+
+    return $themeDefault;
+}
+
 function siteText(array $config, string $zh, string $en): string
 {
     return siteLanguage($config) === 'en' ? $en : $zh;
+}
+
+function listText(array $config, string $zh, string $en): string
+{
+    return (siteLanguage($config) === 'en' || themeClass(siteSettings($config)) === 'target-theme-apparel') ? $en : $zh;
 }
 
 function jsonResponse(int $status, array $payload): void
@@ -1121,6 +1151,16 @@ function normalizeSiteSettings(array $settings, array $config = []): array
     $frontMode = (string) ($settings['front_mode'] ?? $config['front_mode'] ?? 'static');
     $frontMode = in_array($frontMode, ['static', 'rewrite'], true) ? $frontMode : 'static';
 
+    $rawSiteLanguage = trim((string) ($settings['site_language'] ?? $config['site_language'] ?? ''));
+    // An empty html_lang in synced site-settings.json must not mask html_lang from config.php.
+    $normalizedHtmlLang = normalizeHtmlLangValue($settings['html_lang'] ?? '');
+    if ($normalizedHtmlLang === '') {
+        $normalizedHtmlLang = normalizeHtmlLangValue($config['html_lang'] ?? '');
+    }
+    $resolvedSiteLanguage = $rawSiteLanguage !== ''
+        ? normalizeSiteLanguage($rawSiteLanguage)
+        : ($normalizedHtmlLang !== '' && stripos($normalizedHtmlLang, 'en') === 0 ? 'en' : 'zh');
+
     return [
         'site_name' => $siteName,
         'site_subtitle' => trim((string) ($settings['site_subtitle'] ?? $config['site_subtitle'] ?? '')),
@@ -1133,7 +1173,8 @@ function normalizeSiteSettings(array $settings, array $config = []): array
         'seo_description_template' => trim((string) ($settings['seo_description_template'] ?? $config['seo_description_template'] ?? '{description}')),
         'featured_limit' => min(100, max(1, (int) ($settings['featured_limit'] ?? $config['featured_limit'] ?? 6))),
         'per_page' => min(200, max(1, (int) ($settings['per_page'] ?? $config['per_page'] ?? 12))),
-        'site_language' => normalizeSiteLanguage($settings['site_language'] ?? $config['site_language'] ?? 'zh'),
+        'site_language' => $resolvedSiteLanguage,
+        'html_lang' => $normalizedHtmlLang,
         'homepage_style' => normalizeHomepageStyle($settings['homepage_style'] ?? $config['homepage_style'] ?? []),
         'homepage_modules' => normalizeHomepageModules($settings['homepage_modules'] ?? $config['homepage_modules'] ?? [], false),
         'home_carousel_slides' => normalizeHomeCarouselSlides($settings['home_carousel_slides'] ?? $config['home_carousel_slides'] ?? []),
@@ -1146,7 +1187,7 @@ function normalizeSiteSettings(array $settings, array $config = []): array
     ];
 }
 
-function siteSettings(array $config): array
+function rawSiteSettings(array $config): array
 {
     $settings = $config;
     $settingsFile = siteSettingsFile($config);
@@ -1157,7 +1198,12 @@ function siteSettings(array $config): array
         }
     }
 
-    return normalizeSiteSettings($settings, $config);
+    return $settings;
+}
+
+function siteSettings(array $config): array
+{
+    return normalizeSiteSettings(rawSiteSettings($config), $config);
 }
 
 function activeTheme(array $settings): string
@@ -2166,19 +2212,20 @@ function renderListPagination(array $config, int $page, int $totalPages): void
         return;
     }
 
-    echo '<nav class="pagination" aria-label="Pagination">';
+    echo '<nav class="pagination" aria-label="'.h(listText($config, '分页', 'Pagination')).'">';
     if ($page > 1) {
-        echo '<a href="'.h(frontSitePath($config, listPagePath($page - 1))).'" rel="prev">上一页</a>';
+        echo '<a href="'.h(frontSitePath($config, listPagePath($page - 1))).'" rel="prev">'.h(listText($config, '上一页', 'Previous')).'</a>';
     }
     for ($i = 1; $i <= $totalPages; $i++) {
+        $pageLabel = listText($config, '第 '.$i.' 页', 'Page '.$i);
         if ($i === $page) {
-            echo '<span class="current" aria-current="page">'.$i.'</span>';
+            echo '<span class="current" aria-current="page" aria-label="'.h($pageLabel).'">'.$i.'</span>';
         } else {
-            echo '<a href="'.h(frontSitePath($config, listPagePath($i))).'">'.$i.'</a>';
+            echo '<a href="'.h(frontSitePath($config, listPagePath($i))).'" aria-label="'.h($pageLabel).'">'.$i.'</a>';
         }
     }
     if ($page < $totalPages) {
-        echo '<a href="'.h(frontSitePath($config, listPagePath($page + 1))).'" rel="next">下一页</a>';
+        echo '<a href="'.h(frontSitePath($config, listPagePath($page + 1))).'" rel="next">'.h(listText($config, '下一页', 'Next')).'</a>';
     }
     echo '</nav>';
 }
@@ -2255,8 +2302,8 @@ function pageHeader(array $config, string $title, array $pageMeta = []): void
     }
     $seo = pageSeoPayload($settings, $title, $pageMeta);
     $homeUrl = frontSitePath($config, '/');
-    $isEnglish = ($settings['site_language'] ?? 'zh') === 'en';
-    echo '<!DOCTYPE html><html lang="'.($isEnglish ? 'en' : 'zh-CN').'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+    $isEnglish = siteLanguage($config) === 'en';
+    echo '<!DOCTYPE html><html lang="'.h(htmlLang($config)).'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
     echo '<title>'.h((string) $seo['page_title']).'</title><meta name="description" content="'.h((string) $seo['description']).'">';
     $keywords = (string) $seo['keywords'];
     if ($keywords !== '') {
@@ -2295,7 +2342,7 @@ function apparelPageHeader(array $config, array $settings, string $title, array 
     $siteName = (string) $settings['site_name'];
     $seo = pageSeoPayload($settings, $title, $pageMeta);
     $homeUrl = frontSitePath($config, '/');
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+    echo '<!DOCTYPE html><html lang="'.h(htmlLang($config, 'en')).'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
     echo '<title>'.h((string) $seo['page_title']).'</title><meta name="description" content="'.h((string) $seo['description']).'">';
     $keywords = (string) $seo['keywords'];
     if ($keywords !== '') {
@@ -2568,6 +2615,14 @@ function hasHomepageExperience(array $settings): bool
     return $slides !== [] || normalizeHomepageModules($settings['homepage_modules'] ?? [], true) !== [];
 }
 
+function renderListNotFound(array $config): void
+{
+    http_response_code(404);
+    pageHeader($config, listText($config, '页面不存在', 'Page not found'));
+    echo '<a class="back" href="'.h(frontSitePath($config, '/')).'">'.h(listText($config, '返回首页', 'Back to Home')).'</a><div class="card empty">'.h(listText($config, '页面不存在。', 'Page not found.')).'</div>';
+    pageFooter($config);
+}
+
 function renderHomePage(array $config, int $page = 1): void
 {
     $settings = siteSettings($config);
@@ -2585,17 +2640,14 @@ function renderHomePage(array $config, int $page = 1): void
 
     $totalPages = listTotalPages($config);
     if ($page < 1 || $page > $totalPages) {
-        http_response_code(404);
-        pageHeader($config, '页面不存在');
-        echo '<a class="back" href="'.h(frontSitePath($config, '/')).'">返回首页</a><div class="card empty">页面不存在。</div>';
-        pageFooter($config);
+        renderListNotFound($config);
 
         return;
     }
 
     $siteName = (string) $settings['site_name'];
     $articles = listPageArticles($config, $page);
-    pageHeader($config, $page > 1 ? '首页 - 第 '.$page.' 页' : siteText($config, '首页', 'Home'), [
+    pageHeader($config, $page > 1 ? listText($config, '首页 - 第 '.$page.' 页', 'Blog - Page '.$page) : siteText($config, '首页', 'Home'), [
         'canonical_url' => frontSiteUrl($config, listPagePath($page)),
     ]);
     echo jsonLdScript([
@@ -2606,7 +2658,7 @@ function renderHomePage(array $config, int $page = 1): void
         "description"=>(string) $settings['site_description'],
     ]);
     if ($page >= 2) {
-        echo '<section class="hero"><h1>'.h($siteName).'</h1><p>第 '.$page.' 页</p></section>';
+        echo '<section class="hero"><h1>'.h($siteName).'</h1><p>'.h(listText($config, '第 '.$page.' 页', 'Page '.$page)).'</p></section>';
     } else {
         $hasCarouselSlides = renderHomeCarouselSlides($config, $settings);
         $hasHomepageModules = renderHomepageModules($config, $settings, $articles);
@@ -2642,10 +2694,7 @@ function renderApparelHomePage(array $config, array $settings, int $page = 1): v
 {
     $totalPages = listTotalPages($config);
     if ($page < 1 || $page > $totalPages) {
-        http_response_code(404);
-        pageHeader($config, '页面不存在');
-        echo '<a class="back" href="'.h(frontSitePath($config, '/')).'">返回首页</a><div class="card empty">页面不存在。</div>';
-        pageFooter($config);
+        renderListNotFound($config);
 
         return;
     }
@@ -2759,10 +2808,7 @@ function renderFashionHomePage(array $config, array $settings, int $page = 1): v
 {
     $totalPages = listTotalPages($config);
     if ($page < 1 || $page > $totalPages) {
-        http_response_code(404);
-        pageHeader($config, '页面不存在');
-        echo '<a class="back" href="'.h(frontSitePath($config, '/')).'">返回首页</a><div class="card empty">页面不存在。</div>';
-        pageFooter($config);
+        renderListNotFound($config);
 
         return;
     }
@@ -2774,7 +2820,7 @@ function renderFashionHomePage(array $config, array $settings, int $page = 1): v
     $featured = $page >= 2 ? [] : array_slice($articles, 0, min(3, count($articles)));
     $latest = array_slice($articles, 0);
 
-    pageHeader($config, $page > 1 ? '首页 - 第 '.$page.' 页' : siteText($config, '首页', 'Home'), [
+    pageHeader($config, $page > 1 ? listText($config, '首页 - 第 '.$page.' 页', 'Blog - Page '.$page) : siteText($config, '首页', 'Home'), [
         'canonical_url' => frontSiteUrl($config, listPagePath($page)),
     ]);
     echo jsonLdScript([
@@ -3076,6 +3122,7 @@ function handleFrontendCapabilities(array $config, string $method, string $path,
         'supports_home_carousel_slides' => true,
         'supports_article_text_ads' => true,
         'supports_static_generation' => ! empty($config['static_publish_enabled']),
+        'supports_head_requests' => true,
     ]);
 }
 
@@ -3235,6 +3282,13 @@ if ($method === 'POST' && preg_match('#^/geoflow-agent/v1/articles/([^/]+)/delet
 if ($method === 'POST' && $path === '/geoflow-agent/v1/site-settings') {
     handleSiteSettingsUpdate($config, $method, $path, $body);
 }
+
+$isHead = $method === 'HEAD';
+if ($isHead) {
+    ob_start(static fn (string $buffer): string => '');
+    $method = 'GET';
+}
+
 if ($method === 'GET' && $path === '/') {
     renderHomePage($config);
     exit;

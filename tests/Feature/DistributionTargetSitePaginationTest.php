@@ -411,13 +411,14 @@ PHP
 
                 $this->assertStringContainsString('class="pagination"', $page1);
                 $this->assertStringContainsString('class="pagination"', $page2);
-                $this->assertStringContainsString('页面不存在。', $page99);
 
                 if ($templateKey === 'apparel-sourcing-intelligence') {
+                    $this->assertStringContainsString('Page not found.', $page99);
                     $this->assertStringContainsString('class="asi-lead"', $page1);
                     $this->assertStringNotContainsString('class="asi-lead"', $page2);
                     $this->assertStringContainsString('Latest Intelligence - Page 2', $page2);
                 } else {
+                    $this->assertStringContainsString('页面不存在。', $page99);
                     $this->assertStringContainsString('Vanguard Choice', $page1);
                     $this->assertStringNotContainsString('Vanguard Choice', $page2);
                     $this->assertStringContainsString('首页 - 第 2 页', $page2);
