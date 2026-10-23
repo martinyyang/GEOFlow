@@ -54,6 +54,7 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
+use App\Support\Utf8Text;
 
 /**
  * 文章管理页（按 bak/admin/articles.php 行为迁移）：
@@ -495,7 +496,7 @@ class ArticleController extends Controller
                     'title' => $payload['title'],
                     'slug' => ArticleWorkflow::generateUniqueSlug($payload['title']),
                     'content' => $payload['content'],
-                    'excerpt' => $payload['excerpt'] !== '' ? $payload['excerpt'] : mb_substr(strip_tags($payload['content']), 0, 200, 'UTF-8'),
+                    'excerpt' => $payload['excerpt'] !== '' ? $payload['excerpt'] : Utf8Text::truncateAtWordBoundary(strip_tags($payload['content']), 200),
                     'keywords' => $payload['keywords'],
                     'meta_description' => $payload['meta_description'],
                     'category_id' => (int) $payload['category_id'],
@@ -790,7 +791,7 @@ class ArticleController extends Controller
                 $slug = $payload['title'] === $lockedArticle->title
                     ? $lockedArticle->slug
                     : ArticleWorkflow::generateUniqueSlug($payload['title'], (int) $lockedArticle->id);
-                $excerpt = $payload['excerpt'] !== '' ? $payload['excerpt'] : mb_substr(strip_tags($payload['content']), 0, 200, 'UTF-8');
+                $excerpt = $payload['excerpt'] !== '' ? $payload['excerpt'] : Utf8Text::truncateAtWordBoundary(strip_tags($payload['content']), 200);
                 $currentRiskHash = $this->articleRiskScanner->contentHash([
                     'title' => $lockedArticle->title,
                     'excerpt' => $lockedArticle->excerpt,

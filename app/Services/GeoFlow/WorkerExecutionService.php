@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Schema;
 use Laravel\Ai\Responses\Data\FinishReason;
 use RuntimeException;
 use Throwable;
+use App\Support\Utf8Text;
 
 /**
  * Worker 任务执行器：将队列任务落地为文章记录（占位实现，先打通 worker/队列链路）。
@@ -176,7 +177,7 @@ class WorkerExecutionService
                         'source_title_id' => (int) $titleRow->id,
                         'original_keyword' => $keyword,
                         'keywords' => $keyword,
-                        'meta_description' => mb_substr($excerpt, 0, 120),
+                        'meta_description' => Utf8Text::truncateAtWordBoundary($excerpt, 120),
                         'status' => $pendingWorkflow['status'],
                         'review_status' => $pendingWorkflow['review_status'],
                         'is_ai_generated' => 1,
@@ -1058,6 +1059,6 @@ class WorkerExecutionService
             return 'AI 生成内容摘要';
         }
 
-        return mb_substr($plain, 0, 180);
+        return Utf8Text::truncateAtWordBoundary($plain, 180);
     }
 }
