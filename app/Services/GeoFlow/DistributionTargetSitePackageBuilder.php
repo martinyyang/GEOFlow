@@ -1555,22 +1555,89 @@ function articleImageUrl(array $article): string
     return '';
 }
 
+function truncateAtWordBoundary(string $text, int $limit, string $ellipsis = '…'): string
+{
+    $text = trim(preg_replace('/\s+/u', ' ', strip_tags($text)) ?? $text);
+    if ($text === '' || $limit <= 0) {
+        return '';
+    }
+    if (mb_strlen($text, 'UTF-8') <= $limit) {
+        return $text;
+    }
+
+    $ellipsisLen = mb_strlen($ellipsis, 'UTF-8');
+    $budget = max(1, $limit - $ellipsisLen);
+    $slice = mb_substr($text, 0, $budget, 'UTF-8');
+    $last = mb_substr($slice, -1, 1, 'UTF-8');
+    $next = mb_substr($text, $budget, 1, 'UTF-8');
+    $isLatinWordChar = static fn (string $ch): bool => preg_match('/^[A-Za-z0-9\'’]$/u', $ch) === 1;
+
+    if ($last !== '' && $isLatinWordChar($last) && $next !== '' && $isLatinWordChar($next)) {
+        $boundary = 0;
+        $len = mb_strlen($slice, 'UTF-8');
+        for ($i = $len - 1; $i >= 0; $i--) {
+            $ch = mb_substr($slice, $i, 1, 'UTF-8');
+            if (! $isLatinWordChar($ch)) {
+                $boundary = $i + 1;
+                break;
+            }
+        }
+        if ($boundary > 0) {
+            $slice = rtrim(mb_substr($slice, 0, $boundary, 'UTF-8'));
+        }
+    }
+
+    $slice = rtrim($slice, " \t\n\r\0\x0B,;:");
+    if ($slice === '') {
+        $slice = mb_substr($text, 0, $budget, 'UTF-8');
+    }
+
+    return $slice.$ellipsis;
+}
+
+function looksAbruptLatinCut(string $text): bool
+{
+    $text = rtrim($text);
+    if ($text === '') {
+        return false;
+    }
+    if (preg_match('/[.!?…。！？]$/u', mb_substr($text, -1, 1, 'UTF-8')) === 1) {
+        return false;
+    }
+    $len = mb_strlen($text, 'UTF-8');
+    // Legacy publishers hard-cut near 160–200 chars without ellipsis.
+    if ($len < 150 || $len > 200) {
+        return false;
+    }
+
+    return preg_match('/[A-Za-z0-9]$/u', mb_substr($text, -1, 1, 'UTF-8')) === 1;
+}
+
 function articleSummary(array $article, int $limit = 160): string
 {
     $summary = trim((string) ($article['excerpt'] ?? $article['meta_description'] ?? ''));
+    $fromContent = trim(strip_tags((string) ($article['content'] ?? '')));
+
+    if ($summary !== '' && looksAbruptLatinCut($summary) && $fromContent !== '') {
+        return truncateAtWordBoundary($fromContent, $limit);
+    }
     if ($summary !== '') {
-        return $summary;
+        return truncateAtWordBoundary($summary, $limit);
     }
 
-    return mb_substr(trim(strip_tags((string) ($article['content'] ?? ''))), 0, $limit);
+    return truncateAtWordBoundary($fromContent, $limit);
 }
 
 function articleMetaDescription(array $article, int $limit = 160): string
 {
-    $description = trim((string) ($article['meta_description'] ?? ''));
-    if ($description === '') {
-        $description = trim((string) ($article['excerpt'] ?? ''));
+    $meta = trim((string) ($article['meta_description'] ?? ''));
+    if ($meta !== '') {
+        // Keep author/admin-provided meta as-is. Hard-cutting here re-breaks
+        // complete sentences after deploy (production hot-fix for Double 11).
+        return preg_replace('/\s+/u', ' ', $meta) ?: $meta;
     }
+
+    $description = trim((string) ($article['excerpt'] ?? ''));
     if ($description === '') {
         $description = trim(strip_tags((string) ($article['content_html'] ?? '')));
     }
@@ -1579,7 +1646,7 @@ function articleMetaDescription(array $article, int $limit = 160): string
     }
     $description = preg_replace('/\s+/u', ' ', $description) ?: $description;
 
-    return mb_substr($description, 0, $limit);
+    return truncateAtWordBoundary($description, $limit);
 }
 
 function articleMetaKeywords(array $article): string
@@ -2643,7 +2710,7 @@ function renderHomePage(array $config, int $page = 1): void
         $articleUrl = frontSitePath($config, '/article/'.rawurlencode($slug));
         echo '<article class="card"><div class="meta"><span class="chip">'.h($category).'</span><span>'.h($publishedAt).'</span></div>';
         echo '<h2><a href="'.h($articleUrl).'">'.h($title).'</a></h2>';
-        echo '<p class="summary">'.h($summary !== '' ? $summary : mb_substr(strip_tags((string) ($article['content'] ?? '')), 0, 160)).'</p>';
+        echo '<p class="summary">'.h(articleSummary($article, 160)).'</p>';
         echo '<a class="read" href="'.h($articleUrl).'">阅读全文</a></article>';
     }
     echo '</section>';
@@ -2931,9 +2998,14 @@ function renderArticlePage(array $config, string $slug): void
         }
         echo '</div>';
     }
-    $excerpt = (string) ($article['excerpt'] ?? '');
-    if ($excerpt !== '') {
+    $excerpt = trim((string) ($article['excerpt'] ?? ''));
+    if ($excerpt !== '' && ! looksAbruptLatinCut($excerpt)) {
         echo '<p class="summary">'.h($excerpt).'</p>';
+    } else {
+        $summary = articleSummary($article, 180);
+        if ($summary !== '') {
+            echo '<p class="summary">'.h($summary).'</p>';
+        }
     }
     if ($isApparel) {
         echo '</header>';
@@ -2999,7 +3071,7 @@ function renderLlmsText(array $config): string
             $title = textMapLine((string) ($article['title'] ?? 'Untitled Article'));
             $summary = textMapLine((string) ($article['excerpt'] ?? $article['meta_description'] ?? ''));
             if ($summary === '') {
-                $summary = textMapLine(mb_substr(strip_tags((string) ($article['content'] ?? '')), 0, 180));
+                $summary = textMapLine(truncateAtWordBoundary(strip_tags((string) ($article['content'] ?? '')), 180));
             }
             $line = '- '.($title !== '' ? $title : $slug).' - '.frontSiteUrl($config, '/article/'.rawurlencode($slug));
             if ($summary !== '') {

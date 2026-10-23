@@ -24,6 +24,7 @@ use App\Support\GeoFlow\AiModelFailoverDecider;
 use App\Support\GeoFlow\ArticleWorkflow;
 use App\Support\GeoFlow\ImageUrlNormalizer;
 use App\Support\GeoFlow\OpenAiRuntimeProvider;
+use App\Support\Utf8Text;
 use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -176,7 +177,7 @@ class WorkerExecutionService
                         'source_title_id' => (int) $titleRow->id,
                         'original_keyword' => $keyword,
                         'keywords' => $keyword,
-                        'meta_description' => mb_substr($excerpt, 0, 120),
+                        'meta_description' => Utf8Text::truncateAtWordBoundary($excerpt, 120),
                         'status' => $pendingWorkflow['status'],
                         'review_status' => $pendingWorkflow['review_status'],
                         'is_ai_generated' => 1,
@@ -1058,6 +1059,6 @@ class WorkerExecutionService
             return 'AI 生成内容摘要';
         }
 
-        return mb_substr($plain, 0, 180);
+        return Utf8Text::truncateAtWordBoundary($plain, 180);
     }
 }

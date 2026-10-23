@@ -18,6 +18,7 @@ use App\Models\Task;
 use App\Support\Admin\ArticleAiQualityProgressPresenter;
 use App\Support\GeoFlow\AiQualityRetrievalMode;
 use App\Support\GeoFlow\ArticleWorkflow;
+use App\Support\Utf8Text;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -99,7 +100,7 @@ class ArticleGeoFlowService
             $normalized['review_status']
         );
         $slug = $normalized['slug'] ?: ArticleWorkflow::generateUniqueSlug($normalized['title']);
-        $excerpt = $normalized['excerpt'] !== '' ? $normalized['excerpt'] : mb_substr(strip_tags($normalized['content']), 0, 200);
+        $excerpt = $normalized['excerpt'] !== '' ? $normalized['excerpt'] : Utf8Text::truncateAtWordBoundary(strip_tags($normalized['content']), 200);
 
         $fallbackWorkflowState = ArticleWorkflow::normalizeState('draft', 'pending');
         $creation = DB::transaction(function () use (
