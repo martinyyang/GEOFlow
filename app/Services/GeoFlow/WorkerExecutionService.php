@@ -24,6 +24,7 @@ use App\Support\GeoFlow\AiModelFailoverDecider;
 use App\Support\GeoFlow\ArticleWorkflow;
 use App\Support\GeoFlow\ImageUrlNormalizer;
 use App\Support\GeoFlow\OpenAiRuntimeProvider;
+use App\Support\Utf8Text;
 use Closure;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -31,7 +32,6 @@ use Illuminate\Support\Facades\Schema;
 use Laravel\Ai\Responses\Data\FinishReason;
 use RuntimeException;
 use Throwable;
-use App\Support\Utf8Text;
 
 /**
  * Worker 任务执行器：将队列任务落地为文章记录（占位实现，先打通 worker/队列链路）。

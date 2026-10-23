@@ -38,6 +38,7 @@ use App\Support\Admin\ArticleAiQualityProgressPresenter;
 use App\Support\AdminWeb;
 use App\Support\GeoFlow\AiQualityRetrievalMode;
 use App\Support\GeoFlow\ArticleWorkflow;
+use App\Support\Utf8Text;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -54,7 +55,6 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
-use App\Support\Utf8Text;
 
 /**
  * 文章管理页（按 bak/admin/articles.php 行为迁移）：

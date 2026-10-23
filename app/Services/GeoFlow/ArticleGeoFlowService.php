@@ -18,9 +18,9 @@ use App\Models\Task;
 use App\Support\Admin\ArticleAiQualityProgressPresenter;
 use App\Support\GeoFlow\AiQualityRetrievalMode;
 use App\Support\GeoFlow\ArticleWorkflow;
+use App\Support\Utf8Text;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
-use App\Support\Utf8Text;
 
 class ArticleGeoFlowService
 {
