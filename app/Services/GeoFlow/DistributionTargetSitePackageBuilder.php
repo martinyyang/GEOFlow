@@ -1630,10 +1630,14 @@ function articleSummary(array $article, int $limit = 160): string
 
 function articleMetaDescription(array $article, int $limit = 160): string
 {
-    $description = trim((string) ($article['meta_description'] ?? ''));
-    if ($description === '') {
-        $description = trim((string) ($article['excerpt'] ?? ''));
+    $meta = trim((string) ($article['meta_description'] ?? ''));
+    if ($meta !== '') {
+        // Keep author/admin-provided meta as-is. Hard-cutting here re-breaks
+        // complete sentences after deploy (production hot-fix for Double 11).
+        return preg_replace('/\s+/u', ' ', $meta) ?: $meta;
     }
+
+    $description = trim((string) ($article['excerpt'] ?? ''));
     if ($description === '') {
         $description = trim(strip_tags((string) ($article['content_html'] ?? '')));
     }
