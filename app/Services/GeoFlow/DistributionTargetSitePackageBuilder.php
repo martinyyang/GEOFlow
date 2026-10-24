@@ -708,8 +708,12 @@ function normalizeHtmlLangValue(mixed $lang): string
 function htmlLang(array $config): string
 {
     $lang = (string) (siteSettings($config)['html_lang'] ?? '');
+    if ($lang !== '') {
+        return $lang;
+    }
 
-    return $lang !== '' ? $lang : 'en';
+    // When html_lang is unset, follow site_language chrome (zh default → zh-CN).
+    return siteLanguage($config) === 'en' ? 'en' : 'zh-CN';
 }
 
 function isEnglishSite(array $config): bool
