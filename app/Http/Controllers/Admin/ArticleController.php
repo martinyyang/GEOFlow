@@ -38,6 +38,7 @@ use App\Support\Admin\ArticleAiQualityProgressPresenter;
 use App\Support\AdminWeb;
 use App\Support\GeoFlow\AiQualityRetrievalMode;
 use App\Support\GeoFlow\ArticleWorkflow;
+use App\Support\Utf8Text;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -495,7 +496,7 @@ class ArticleController extends Controller
                     'title' => $payload['title'],
                     'slug' => ArticleWorkflow::generateUniqueSlug($payload['title']),
                     'content' => $payload['content'],
-                    'excerpt' => $payload['excerpt'] !== '' ? $payload['excerpt'] : mb_substr(strip_tags($payload['content']), 0, 200, 'UTF-8'),
+                    'excerpt' => $payload['excerpt'] !== '' ? $payload['excerpt'] : Utf8Text::truncateAtWordBoundary(strip_tags($payload['content']), 200),
                     'keywords' => $payload['keywords'],
                     'meta_description' => $payload['meta_description'],
                     'category_id' => (int) $payload['category_id'],
@@ -790,7 +791,7 @@ class ArticleController extends Controller
                 $slug = $payload['title'] === $lockedArticle->title
                     ? $lockedArticle->slug
                     : ArticleWorkflow::generateUniqueSlug($payload['title'], (int) $lockedArticle->id);
-                $excerpt = $payload['excerpt'] !== '' ? $payload['excerpt'] : mb_substr(strip_tags($payload['content']), 0, 200, 'UTF-8');
+                $excerpt = $payload['excerpt'] !== '' ? $payload['excerpt'] : Utf8Text::truncateAtWordBoundary(strip_tags($payload['content']), 200);
                 $currentRiskHash = $this->articleRiskScanner->contentHash([
                     'title' => $lockedArticle->title,
                     'excerpt' => $lockedArticle->excerpt,

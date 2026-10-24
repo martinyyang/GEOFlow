@@ -609,6 +609,7 @@ h2{font-size:22px;margin:0 0 10px}h2 a{color:#111827;text-decoration:none}h2 a:h
 .article-text-ads{display:grid;gap:10px;margin:18px 0;padding:12px 0;border-top:1px solid rgba(148,163,184,.26);border-bottom:1px solid rgba(148,163,184,.26);background:transparent;font:inherit}.article-text-ads--content-top{margin-top:0;margin-bottom:22px}.article-text-ads--content-bottom{margin-top:26px;margin-bottom:0}.article-text-ad-module{display:flex;flex-direction:column;gap:6px;background:transparent}.article-text-ad-link{display:inline-flex;align-items:center;width:max-content;max-width:100%;color:var(--article-text-ad-color,#2563eb);font:inherit;font-weight:700;line-height:1.65;text-decoration:none}.article-text-ad-link:hover{text-decoration:underline;text-underline-offset:4px}.article-text-ad-text{overflow-wrap:anywhere}
 .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:28px;padding-top:22px;border-top:1px solid #e5e7eb}.tags span{display:inline-flex;border:1px solid #e5e7eb;background:#f9fafb;color:#4b5563;border-radius:999px;padding:5px 10px;font-size:13px}
 .empty{padding:52px;text-align:center;color:#6b7280}.back{display:inline-block;margin:28px 0 18px;color:#4b5563;text-decoration:none}
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:24px 0 36px;flex-wrap:wrap}.pagination a,.pagination span{display:inline-flex;align-items:center;justify-content:center;min-width:36px;height:36px;padding:0 12px;border:1px solid #e5e7eb;border-radius:6px;color:#374151;text-decoration:none;font-size:14px;background:#fff}.pagination a:hover{border-color:#2563eb;color:#2563eb}.pagination .current{font-weight:700;border-color:#2563eb;color:#2563eb;background:#eff6ff}
 .homepage-carousel{padding:32px 0 4px}.homepage-carousel-track{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}.homepage-slide{position:relative;overflow:hidden;border:1px solid rgba(148,163,184,.24);border-radius:var(--homepage-radius,8px);background:var(--homepage-surface,#fff);color:var(--homepage-text,#111827)}.homepage-slide-media{display:block;aspect-ratio:16/9;background:#e5e7eb}.homepage-slide-media img{display:block;width:100%;height:100%;object-fit:cover}.homepage-slide-copy{padding:14px 16px;font-weight:800;line-height:1.35;overflow-wrap:anywhere}.homepage-slide-copy a{color:var(--homepage-text,#111827);text-decoration:none}.homepage-slide-copy a:hover{color:var(--homepage-accent,#2563eb)}
 .homepage-modules{display:grid;gap:22px;padding:32px 0}.homepage-module{border-radius:var(--homepage-radius,8px);background:var(--module-surface,var(--homepage-surface,#fff));color:var(--module-text,var(--homepage-text,#111827));border:1px solid rgba(148,163,184,.24);overflow:hidden}.homepage-module-inner{padding:28px}.homepage-module h1,.homepage-module h2{letter-spacing:0;margin:0 0 10px;overflow-wrap:anywhere}.homepage-module p{color:var(--module-muted,var(--homepage-muted,#6b7280));line-height:1.7;margin:0 0 16px}.homepage-module a{color:var(--module-accent,var(--homepage-accent,#2563eb))}.homepage-module .module-kicker{color:var(--module-accent,var(--homepage-accent,#2563eb));font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.homepage-module .module-action{display:inline-flex;align-items:center;border-radius:999px;background:var(--module-accent,var(--homepage-accent,#2563eb));color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:9px 15px}.homepage-module.align-center{text-align:center}.homepage-hero h1{font-size:clamp(34px,6vw,68px);line-height:1.02}.homepage-split{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(280px,.95fr);gap:24px;align-items:center}.homepage-media img,.homepage-image-band img{display:block;width:100%;height:auto;border-radius:calc(var(--homepage-radius,8px) - 2px)}.homepage-image-band .homepage-module-inner{padding:0}.homepage-image-band .module-copy{padding:24px}.homepage-metrics,.homepage-features,.homepage-chart-bars,.homepage-article-grid{display:grid;gap:14px}.homepage-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}.metric-item,.feature-item,.chart-row,.homepage-article-card{border:1px solid rgba(148,163,184,.22);border-radius:calc(var(--homepage-radius,8px) - 2px);background:rgba(255,255,255,.72);padding:16px}.metric-item strong{display:block;font-size:28px;line-height:1.1}.metric-item span,.chart-row span{display:block;color:var(--module-muted,var(--homepage-muted,#6b7280));font-size:13px}.homepage-features,.homepage-article-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.feature-item h3,.homepage-article-card h3{margin:0 0 8px;font-size:18px;line-height:1.25}.chart-row strong{display:block;margin-bottom:8px}.chart-bar{height:10px;border-radius:999px;background:rgba(37,99,235,.14);overflow:hidden}.chart-bar i{display:block;height:100%;width:var(--bar-width,0%);background:var(--module-accent,var(--homepage-accent,#2563eb))}.homepage-custom-html :first-child{margin-top:0}.homepage-custom-html :last-child{margin-bottom:0}
 footer{border-top:1px solid #e5e7eb;color:#6b7280;font-size:13px;padding:24px 0 36px}
@@ -692,6 +693,33 @@ function siteLanguage(array $config): string
 function siteText(array $config, string $zh, string $en): string
 {
     return siteLanguage($config) === 'en' ? $en : $zh;
+}
+
+function normalizeHtmlLangValue(mixed $lang): string
+{
+    $value = trim((string) ($lang ?? ''));
+    if ($value === '' || preg_match('/^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})?$/', $value) !== 1) {
+        return '';
+    }
+
+    return strtolower($value);
+}
+
+function htmlLang(array $config): string
+{
+    $lang = (string) (siteSettings($config)['html_lang'] ?? '');
+
+    return $lang !== '' ? $lang : 'en';
+}
+
+function isEnglishSite(array $config): bool
+{
+    return stripos(htmlLang($config), 'en') === 0;
+}
+
+function listText(array $config, string $zh, string $en): string
+{
+    return isEnglishSite($config) ? $en : $zh;
 }
 
 function jsonResponse(int $status, array $payload): void
@@ -1120,6 +1148,11 @@ function normalizeSiteSettings(array $settings, array $config = []): array
     $frontMode = (string) ($settings['front_mode'] ?? $config['front_mode'] ?? 'static');
     $frontMode = in_array($frontMode, ['static', 'rewrite'], true) ? $frontMode : 'static';
 
+    $normalizedHtmlLang = normalizeHtmlLangValue($settings['html_lang'] ?? '');
+    if ($normalizedHtmlLang === '') {
+        $normalizedHtmlLang = normalizeHtmlLangValue($config['html_lang'] ?? '');
+    }
+
     return [
         'site_name' => $siteName,
         'site_subtitle' => trim((string) ($settings['site_subtitle'] ?? $config['site_subtitle'] ?? '')),
@@ -1133,6 +1166,7 @@ function normalizeSiteSettings(array $settings, array $config = []): array
         'featured_limit' => min(100, max(1, (int) ($settings['featured_limit'] ?? $config['featured_limit'] ?? 6))),
         'per_page' => min(200, max(1, (int) ($settings['per_page'] ?? $config['per_page'] ?? 12))),
         'site_language' => normalizeSiteLanguage($settings['site_language'] ?? $config['site_language'] ?? 'zh'),
+        'html_lang' => $normalizedHtmlLang,
         'homepage_style' => normalizeHomepageStyle($settings['homepage_style'] ?? $config['homepage_style'] ?? []),
         'homepage_modules' => normalizeHomepageModules($settings['homepage_modules'] ?? $config['homepage_modules'] ?? [], false),
         'home_carousel_slides' => normalizeHomeCarouselSlides($settings['home_carousel_slides'] ?? $config['home_carousel_slides'] ?? []),
@@ -1145,7 +1179,7 @@ function normalizeSiteSettings(array $settings, array $config = []): array
     ];
 }
 
-function siteSettings(array $config): array
+function rawSiteSettings(array $config): array
 {
     $settings = $config;
     $settingsFile = siteSettingsFile($config);
@@ -1156,7 +1190,12 @@ function siteSettings(array $config): array
         }
     }
 
-    return normalizeSiteSettings($settings, $config);
+    return $settings;
+}
+
+function siteSettings(array $config): array
+{
+    return normalizeSiteSettings(rawSiteSettings($config), $config);
 }
 
 function activeTheme(array $settings): string
@@ -1546,22 +1585,89 @@ function articleImageUrl(array $article): string
     return '';
 }
 
+function truncateAtWordBoundary(string $text, int $limit, string $ellipsis = '…'): string
+{
+    $text = trim(preg_replace('/\s+/u', ' ', strip_tags($text)) ?? $text);
+    if ($text === '' || $limit <= 0) {
+        return '';
+    }
+    if (mb_strlen($text, 'UTF-8') <= $limit) {
+        return $text;
+    }
+
+    $ellipsisLen = mb_strlen($ellipsis, 'UTF-8');
+    $budget = max(1, $limit - $ellipsisLen);
+    $slice = mb_substr($text, 0, $budget, 'UTF-8');
+    $last = mb_substr($slice, -1, 1, 'UTF-8');
+    $next = mb_substr($text, $budget, 1, 'UTF-8');
+    $isLatinWordChar = static fn (string $ch): bool => preg_match('/^[A-Za-z0-9\'’]$/u', $ch) === 1;
+
+    if ($last !== '' && $isLatinWordChar($last) && $next !== '' && $isLatinWordChar($next)) {
+        $boundary = 0;
+        $len = mb_strlen($slice, 'UTF-8');
+        for ($i = $len - 1; $i >= 0; $i--) {
+            $ch = mb_substr($slice, $i, 1, 'UTF-8');
+            if (! $isLatinWordChar($ch)) {
+                $boundary = $i + 1;
+                break;
+            }
+        }
+        if ($boundary > 0) {
+            $slice = rtrim(mb_substr($slice, 0, $boundary, 'UTF-8'));
+        }
+    }
+
+    $slice = rtrim($slice, " \t\n\r\0\x0B,;:");
+    if ($slice === '') {
+        $slice = mb_substr($text, 0, $budget, 'UTF-8');
+    }
+
+    return $slice.$ellipsis;
+}
+
+function looksAbruptLatinCut(string $text): bool
+{
+    $text = rtrim($text);
+    if ($text === '') {
+        return false;
+    }
+    if (preg_match('/[.!?…。！？]$/u', mb_substr($text, -1, 1, 'UTF-8')) === 1) {
+        return false;
+    }
+    $len = mb_strlen($text, 'UTF-8');
+    // Legacy publishers hard-cut near 160–200 chars without ellipsis.
+    if ($len < 150 || $len > 200) {
+        return false;
+    }
+
+    return preg_match('/[A-Za-z0-9]$/u', mb_substr($text, -1, 1, 'UTF-8')) === 1;
+}
+
 function articleSummary(array $article, int $limit = 160): string
 {
     $summary = trim((string) ($article['excerpt'] ?? $article['meta_description'] ?? ''));
+    $fromContent = trim(strip_tags((string) ($article['content'] ?? '')));
+
+    if ($summary !== '' && looksAbruptLatinCut($summary) && $fromContent !== '') {
+        return truncateAtWordBoundary($fromContent, $limit);
+    }
     if ($summary !== '') {
-        return $summary;
+        return truncateAtWordBoundary($summary, $limit);
     }
 
-    return mb_substr(trim(strip_tags((string) ($article['content'] ?? ''))), 0, $limit);
+    return truncateAtWordBoundary($fromContent, $limit);
 }
 
 function articleMetaDescription(array $article, int $limit = 160): string
 {
-    $description = trim((string) ($article['meta_description'] ?? ''));
-    if ($description === '') {
-        $description = trim((string) ($article['excerpt'] ?? ''));
+    $meta = trim((string) ($article['meta_description'] ?? ''));
+    if ($meta !== '') {
+        // Keep author/admin-provided meta as-is. Hard-cutting here re-breaks
+        // complete sentences after deploy (production hot-fix for Double 11).
+        return preg_replace('/\s+/u', ' ', $meta) ?: $meta;
     }
+
+    $description = trim((string) ($article['excerpt'] ?? ''));
     if ($description === '') {
         $description = trim(strip_tags((string) ($article['content_html'] ?? '')));
     }
@@ -1570,7 +1676,7 @@ function articleMetaDescription(array $article, int $limit = 160): string
     }
     $description = preg_replace('/\s+/u', ' ', $description) ?: $description;
 
-    return mb_substr($description, 0, $limit);
+    return truncateAtWordBoundary($description, $limit);
 }
 
 function articleMetaKeywords(array $article): string
@@ -1757,10 +1863,10 @@ function frontSiteUrl(array $config, string $path): string
     return $origin.frontSitePath($config, $path);
 }
 
-function renderHomePageHtml(array $config): string
+function renderHomePageHtml(array $config, int $page = 1): string
 {
     ob_start();
-    renderHomePage($config);
+    renderHomePage($config, $page);
 
     return (string) ob_get_clean();
 }
@@ -1884,6 +1990,50 @@ function pruneStaticArticlePages(array $config, array $activeSlugs): int
     return $removed;
 }
 
+function pruneStaticListPages(array $config, int $totalPages): int
+{
+    $pageRoot = staticRoot($config).'/page';
+    if (! is_dir($pageRoot)) {
+        return 0;
+    }
+
+    $entries = scandir($pageRoot);
+    if (! is_array($entries)) {
+        return 0;
+    }
+
+    $removed = 0;
+    foreach ($entries as $entry) {
+        if ($entry === '.' || $entry === '..') {
+            continue;
+        }
+
+        $path = $pageRoot.'/'.$entry;
+        if (is_link($path) || ! is_dir($path)) {
+            continue;
+        }
+
+        $isPureInteger = preg_match('/^[1-9][0-9]*$/', $entry) === 1;
+        $pageNumber = $isPureInteger ? (int) $entry : 0;
+        $keep = $isPureInteger && $pageNumber >= 2 && $pageNumber <= $totalPages;
+
+        if (! $keep) {
+            removeStaticDirectory($path);
+            $removed++;
+        }
+    }
+
+    $remaining = scandir($pageRoot);
+    if (is_array($remaining)) {
+        $nonDots = array_filter($remaining, static fn (string $item): bool => $item !== '.' && $item !== '..');
+        if ($nonDots === []) {
+            @rmdir($pageRoot);
+        }
+    }
+
+    return $removed;
+}
+
 function rebuildStaticSite(array $config): array
 {
     if (! staticPublishEnabled($config)) {
@@ -1891,6 +2041,12 @@ function rebuildStaticSite(array $config): array
     }
 
     writeStaticFile($config, 'index.html', renderHomePageHtml($config));
+    $totalPages = listTotalPages($config);
+    for ($p = 2; $p <= $totalPages; $p++) {
+        writeStaticFile($config, 'page/'.$p.'/index.html', renderHomePageHtml($config, $p));
+    }
+    $pagesRemoved = pruneStaticListPages($config, $totalPages);
+
     writeStaticFile($config, 'llms.txt', renderLlmsText($config));
     writeStaticFile($config, 'sitemap.txt', renderSitemapText($config));
 
@@ -1907,7 +2063,13 @@ function rebuildStaticSite(array $config): array
     }
     $removed = pruneStaticArticlePages($config, $activeSlugs);
 
-    return ['enabled' => true, 'articles' => $count, 'removed' => $removed];
+    return [
+        'enabled' => true,
+        'articles' => $count,
+        'removed' => $removed,
+        'pages' => $totalPages,
+        'pages_removed' => $pagesRemoved,
+    ];
 }
 
 function ensureStorage(array $config): void
@@ -2083,6 +2245,50 @@ function findArticle(array $config, string $slug): ?array
     return null;
 }
 
+function listTotalPages(array $config): int
+{
+    $perPage = max(1, (int) (siteSettings($config)['per_page'] ?? 12));
+
+    return max(1, (int) ceil(count(loadArticles($config)) / $perPage));
+}
+
+function listPagePath(int $page): string
+{
+    return $page <= 1 ? '/' : '/page/'.$page;
+}
+
+function listPageArticles(array $config, int $page): array
+{
+    $perPage = max(1, (int) (siteSettings($config)['per_page'] ?? 12));
+    $offset = max(0, ($page - 1) * $perPage);
+
+    return array_slice(loadArticles($config), $offset, $perPage);
+}
+
+function renderListPagination(array $config, int $page, int $totalPages): void
+{
+    if ($totalPages <= 1) {
+        return;
+    }
+
+    echo '<nav class="pagination" aria-label="'.h(listText($config, '分页', 'Pagination')).'">';
+    if ($page > 1) {
+        echo '<a href="'.h(frontSitePath($config, listPagePath($page - 1))).'" rel="prev">'.h(listText($config, '上一页', 'Previous')).'</a>';
+    }
+    for ($i = 1; $i <= $totalPages; $i++) {
+        $pageLabel = listText($config, '第 '.$i.' 页', 'Page '.$i);
+        if ($i === $page) {
+            echo '<span class="current" aria-current="page" aria-label="'.h($pageLabel).'">'.$i.'</span>';
+        } else {
+            echo '<a href="'.h(frontSitePath($config, listPagePath($i))).'" aria-label="'.h($pageLabel).'">'.$i.'</a>';
+        }
+    }
+    if ($page < $totalPages) {
+        echo '<a href="'.h(frontSitePath($config, listPagePath($page + 1))).'" rel="next">'.h(listText($config, '下一页', 'Next')).'</a>';
+    }
+    echo '</nav>';
+}
+
 function articleCategoryName(array $article): string
 {
     return is_array($article['category'] ?? null) ? (string) ($article['category']['name'] ?? 'Insight') : 'Insight';
@@ -2156,7 +2362,7 @@ function pageHeader(array $config, string $title, array $pageMeta = []): void
     $seo = pageSeoPayload($settings, $title, $pageMeta);
     $homeUrl = frontSitePath($config, '/');
     $isEnglish = ($settings['site_language'] ?? 'zh') === 'en';
-    echo '<!DOCTYPE html><html lang="'.($isEnglish ? 'en' : 'zh-CN').'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+    echo '<!DOCTYPE html><html lang="'.h(htmlLang($config)).'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
     echo '<title>'.h((string) $seo['page_title']).'</title><meta name="description" content="'.h((string) $seo['description']).'">';
     $keywords = (string) $seo['keywords'];
     if ($keywords !== '') {
@@ -2195,7 +2401,7 @@ function apparelPageHeader(array $config, array $settings, string $title, array 
     $siteName = (string) $settings['site_name'];
     $seo = pageSeoPayload($settings, $title, $pageMeta);
     $homeUrl = frontSitePath($config, '/');
-    echo '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+    echo '<!DOCTYPE html><html lang="'.h(htmlLang($config)).'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
     echo '<title>'.h((string) $seo['page_title']).'</title><meta name="description" content="'.h((string) $seo['description']).'">';
     $keywords = (string) $seo['keywords'];
     if ($keywords !== '') {
@@ -2468,35 +2674,56 @@ function hasHomepageExperience(array $settings): bool
     return $slides !== [] || normalizeHomepageModules($settings['homepage_modules'] ?? [], true) !== [];
 }
 
-function renderHomePage(array $config): void
+function renderListNotFound(array $config): void
+{
+    http_response_code(404);
+    pageHeader($config, listText($config, '页面不存在', 'Page not found'));
+    echo '<a class="back" href="'.h(frontSitePath($config, '/')).'">'.h(listText($config, '返回首页', 'Back to Home')).'</a><div class="card empty">'.h(listText($config, '页面不存在。', 'Page not found.')).'</div>';
+    pageFooter($config);
+}
+
+function renderHomePage(array $config, int $page = 1): void
 {
     $settings = siteSettings($config);
     if (! hasHomepageExperience($settings) && themeClass($settings) === 'target-theme-apparel') {
-        renderApparelHomePage($config, $settings);
+        renderApparelHomePage($config, $settings, $page);
 
         return;
     }
 
     if (! hasHomepageExperience($settings) && themeClass($settings) === 'target-theme-fashion') {
-        renderFashionHomePage($config, $settings);
+        renderFashionHomePage($config, $settings, $page);
+
+        return;
+    }
+
+    $totalPages = listTotalPages($config);
+    if ($page < 1 || $page > $totalPages) {
+        renderListNotFound($config);
 
         return;
     }
 
     $siteName = (string) $settings['site_name'];
-    $articles = array_slice(loadArticles($config), 0, (int) $settings['per_page']);
-    pageHeader($config, siteText($config, '首页', 'Home'));
+    $articles = listPageArticles($config, $page);
+    pageHeader($config, $page > 1 ? listText($config, '首页 - 第 '.$page.' 页', 'Blog - Page '.$page) : siteText($config, '首页', 'Home'), [
+        'canonical_url' => frontSiteUrl($config, listPagePath($page)),
+    ]);
     echo jsonLdScript([
         "@context"=>"https://schema.org",
         "@type"=>"WebSite",
         "name"=>$siteName,
-        "url"=>frontSiteUrl($config, '/'),
+        "url"=>frontSiteUrl($config, listPagePath($page)),
         "description"=>(string) $settings['site_description'],
     ]);
-    $hasCarouselSlides = renderHomeCarouselSlides($config, $settings);
-    $hasHomepageModules = renderHomepageModules($config, $settings, $articles);
-    if (! $hasCarouselSlides && ! $hasHomepageModules) {
-        echo '<section class="hero"><h1>'.h($siteName).'</h1><p>'.h((string) $settings['site_description']).'</p></section>';
+    if ($page >= 2) {
+        echo '<section class="hero"><h1>'.h($siteName).'</h1><p>'.h(listText($config, '第 '.$page.' 页', 'Page '.$page)).'</p></section>';
+    } else {
+        $hasCarouselSlides = renderHomeCarouselSlides($config, $settings);
+        $hasHomepageModules = renderHomepageModules($config, $settings, $articles);
+        if (! $hasCarouselSlides && ! $hasHomepageModules) {
+            echo '<section class="hero"><h1>'.h($siteName).'</h1><p>'.h((string) $settings['site_description']).'</p></section>';
+        }
     }
     if ($articles === []) {
         echo '<div class="card empty">'.h(siteText($config, '暂无文章。请先从 GEOFlow 发布一篇绑定此渠道的文章。', 'No articles yet. Publish an article bound to this channel from GEOFlow first.')).'</div>';
@@ -2514,27 +2741,43 @@ function renderHomePage(array $config): void
         $articleUrl = frontSitePath($config, '/article/'.rawurlencode($slug));
         echo '<article class="card"><div class="meta"><span class="chip">'.h($category).'</span><span>'.h($publishedAt).'</span></div>';
         echo '<h2><a href="'.h($articleUrl).'">'.h($title).'</a></h2>';
-        echo '<p class="summary">'.h($summary !== '' ? $summary : mb_substr(strip_tags((string) ($article['content'] ?? '')), 0, 160)).'</p>';
+        echo '<p class="summary">'.h(articleSummary($article, 160)).'</p>';
         echo '<a class="read" href="'.h($articleUrl).'">'.h(siteText($config, '阅读全文', 'Read more')).'</a></article>';
     }
     echo '</section>';
+    renderListPagination($config, $page, $totalPages);
     pageFooter($config);
 }
 
-function renderApparelHomePage(array $config, array $settings): void
+function renderApparelHomePage(array $config, array $settings, int $page = 1): void
 {
-    $siteName = (string) $settings['site_name'];
-    $articles = array_slice(loadArticles($config), 0, (int) $settings['per_page']);
-    $lead = $articles[0] ?? null;
-    $headlines = array_slice($articles, 1, 3);
-    $latest = $lead ? array_slice($articles, 1) : $articles;
+    $totalPages = listTotalPages($config);
+    if ($page < 1 || $page > $totalPages) {
+        renderListNotFound($config);
 
-    pageHeader($config, 'Latest Intelligence');
+        return;
+    }
+
+    $siteName = (string) $settings['site_name'];
+    $articles = listPageArticles($config, $page);
+    if ($page >= 2) {
+        $lead = null;
+        $headlines = [];
+        $latest = $articles;
+    } else {
+        $lead = $articles[0] ?? null;
+        $headlines = array_slice($articles, 1, 3);
+        $latest = $lead ? array_slice($articles, 1) : $articles;
+    }
+
+    pageHeader($config, $page > 1 ? 'Latest Intelligence - Page '.$page : 'Latest Intelligence', [
+        'canonical_url' => frontSiteUrl($config, listPagePath($page)),
+    ]);
     echo jsonLdScript([
         "@context"=>"https://schema.org",
         "@type"=>"CollectionPage",
         "name"=>"Latest Intelligence - ".$siteName,
-        "url"=>frontSiteUrl($config, '/'),
+        "url"=>frontSiteUrl($config, listPagePath($page)),
         "description"=>(string) $settings['site_description'],
     ]);
     echo '<div class="asi-shell asi-page">';
@@ -2566,7 +2809,9 @@ function renderApparelHomePage(array $config, array $settings): void
     foreach ($latest as $article) {
         renderApparelArticleCard($config, $article);
     }
-    echo '</div></section>';
+    echo '</div>';
+    renderListPagination($config, $page, $totalPages);
+    echo '</section>';
     renderApparelSidebar($config, $settings, $articles);
     echo '</div></div>';
     pageFooter($config);
@@ -2618,21 +2863,30 @@ function renderApparelSidebar(array $config, array $settings, array $articles): 
     echo '</div></section></aside>';
 }
 
-function renderFashionHomePage(array $config, array $settings): void
+function renderFashionHomePage(array $config, array $settings, int $page = 1): void
 {
+    $totalPages = listTotalPages($config);
+    if ($page < 1 || $page > $totalPages) {
+        renderListNotFound($config);
+
+        return;
+    }
+
     $siteName = (string) $settings['site_name'];
     $description = (string) $settings['site_description'];
     $subtitle = trim((string) ($settings['site_subtitle'] ?? ''));
-    $articles = array_slice(loadArticles($config), 0, (int) $settings['per_page']);
-    $featured = array_slice($articles, 0, min(3, count($articles)));
+    $articles = listPageArticles($config, $page);
+    $featured = $page >= 2 ? [] : array_slice($articles, 0, min(3, count($articles)));
     $latest = array_slice($articles, 0);
 
-    pageHeader($config, siteText($config, '首页', 'Home'));
+    pageHeader($config, $page > 1 ? listText($config, '首页 - 第 '.$page.' 页', 'Blog - Page '.$page) : siteText($config, '首页', 'Home'), [
+        'canonical_url' => frontSiteUrl($config, listPagePath($page)),
+    ]);
     echo jsonLdScript([
         "@context"=>"https://schema.org",
         "@type"=>"WebSite",
         "name"=>$siteName,
-        "url"=>frontSiteUrl($config, '/'),
+        "url"=>frontSiteUrl($config, listPagePath($page)),
         "description"=>$description,
     ]);
     echo '<section class="fashion-hero"><div class="fashion-wordmark">TREND</div><div class="fashion-hero-inner">';
@@ -2678,7 +2932,9 @@ function renderFashionHomePage(array $config, array $settings): void
     foreach ($latest as $article) {
         renderFashionArticleCard($config, $article);
     }
-    echo '</div></section>';
+    echo '</div>';
+    renderListPagination($config, $page, $totalPages);
+    echo '</section>';
     pageFooter($config);
 }
 
@@ -2774,9 +3030,14 @@ function renderArticlePage(array $config, string $slug): void
         }
         echo '</div>';
     }
-    $excerpt = (string) ($article['excerpt'] ?? '');
-    if ($excerpt !== '') {
+    $excerpt = trim((string) ($article['excerpt'] ?? ''));
+    if ($excerpt !== '' && ! looksAbruptLatinCut($excerpt)) {
         echo '<p class="summary">'.h($excerpt).'</p>';
+    } else {
+        $summary = articleSummary($article, 180);
+        if ($summary !== '') {
+            echo '<p class="summary">'.h($summary).'</p>';
+        }
     }
     if ($isApparel) {
         echo '</header>';
@@ -2842,7 +3103,7 @@ function renderLlmsText(array $config): string
             $title = textMapLine((string) ($article['title'] ?? 'Untitled Article'));
             $summary = textMapLine((string) ($article['excerpt'] ?? $article['meta_description'] ?? ''));
             if ($summary === '') {
-                $summary = textMapLine(mb_substr(strip_tags((string) ($article['content'] ?? '')), 0, 180));
+                $summary = textMapLine(truncateAtWordBoundary(strip_tags((string) ($article['content'] ?? '')), 180));
             }
             $line = '- '.($title !== '' ? $title : $slug).' - '.frontSiteUrl($config, '/article/'.rawurlencode($slug));
             if ($summary !== '') {
@@ -2913,6 +3174,7 @@ function handleFrontendCapabilities(array $config, string $method, string $path,
         'supported_modules' => frontendSupportedModules(),
         'supported_routes' => [
             '/',
+            '/page/{n}',
             '/article/{slug}',
             '/llms.txt',
             '/sitemap.txt',
@@ -2924,6 +3186,7 @@ function handleFrontendCapabilities(array $config, string $method, string $path,
         'supports_home_carousel_slides' => true,
         'supports_article_text_ads' => true,
         'supports_static_generation' => ! empty($config['static_publish_enabled']),
+        'supports_head_requests' => true,
     ]);
 }
 
@@ -3083,8 +3346,23 @@ if ($method === 'POST' && preg_match('#^/geoflow-agent/v1/articles/([^/]+)/delet
 if ($method === 'POST' && $path === '/geoflow-agent/v1/site-settings') {
     handleSiteSettingsUpdate($config, $method, $path, $body);
 }
+
+$isHead = $method === 'HEAD';
+if ($isHead) {
+    ob_start(static fn (string $buffer): string => '');
+    $method = 'GET';
+}
+
 if ($method === 'GET' && $path === '/') {
     renderHomePage($config);
+    exit;
+}
+if ($method === 'GET' && $path === '/page/1') {
+    header('Location: '.frontSitePath($config, '/'), true, 301);
+    exit;
+}
+if ($method === 'GET' && preg_match('#^/page/([1-9][0-9]{0,5})$#', $path, $m) === 1) {
+    renderHomePage($config, (int) $m[1]);
     exit;
 }
 if ($method === 'GET' && $path === '/llms.txt') {
