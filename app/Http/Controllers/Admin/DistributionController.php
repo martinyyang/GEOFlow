@@ -1376,6 +1376,7 @@ class DistributionController extends Controller
             'seo_description_template' => ['nullable', 'string', 'max:255'],
             'featured_limit' => ['nullable', 'integer', 'min:1', 'max:100'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:200'],
+            'site_language' => ['nullable', 'string', 'in:zh,en'],
             'frontend_experience_mode' => ['nullable', 'string', 'in:custom,inherit_default,snapshot_default'],
             'homepage_style_json' => ['nullable', 'string', 'max:50000'],
             'homepage_modules_json' => ['nullable', 'string', 'max:120000'],
@@ -1697,6 +1698,7 @@ class DistributionController extends Controller
             'seo_description_template' => '{description}',
             'featured_limit' => 6,
             'per_page' => 12,
+            'site_language' => 'zh',
         ];
 
         return [
@@ -1711,6 +1713,7 @@ class DistributionController extends Controller
             'seo_description_template' => trim((string) ($payload['seo_description_template'] ?? $defaults['seo_description_template'])),
             'featured_limit' => min(100, max(1, (int) ($payload['featured_limit'] ?? $defaults['featured_limit']))),
             'per_page' => min(200, max(1, (int) ($payload['per_page'] ?? $defaults['per_page']))),
+            'site_language' => DistributionChannel::normalizeSiteLanguage($payload['site_language'] ?? $defaults['site_language'] ?? 'zh'),
         ] + $this->normalizeChannelFrontendSettings($payload, $channel);
     }
 

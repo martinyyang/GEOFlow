@@ -31,6 +31,7 @@ class DistributionTargetSitePaginationTest extends TestCase
             'template_key' => 'default',
             'site_settings' => [
                 'site_name' => 'Assert Blog',
+                'html_lang' => 'en',
                 'per_page' => 2,
             ],
             'status' => 'active',
@@ -84,6 +85,7 @@ class DistributionTargetSitePaginationTest extends TestCase
             'template_key' => 'default',
             'site_settings' => [
                 'site_name' => 'Rewrite Blog',
+                'html_lang' => 'en',
                 'per_page' => 2,
             ],
             'status' => 'active',
@@ -102,9 +104,10 @@ class DistributionTargetSitePaginationTest extends TestCase
         $this->assertTrue($zip->extractTo($extractPath));
         $zip->close();
 
-        // Write site-settings.json with per_page = 2
+        // English pagination/404 copy via html_lang (site_language may stay zh default).
         file_put_contents($extractPath.'/storage/site-settings.json', json_encode([
             'site_name' => 'Rewrite Blog',
+            'html_lang' => 'en',
             'per_page' => 2,
         ], JSON_UNESCAPED_UNICODE));
 
@@ -231,6 +234,7 @@ PHP
             'template_key' => 'default',
             'site_settings' => [
                 'site_name' => 'Static Blog',
+                'html_lang' => 'en',
                 'per_page' => 2,
             ],
             'status' => 'active',
@@ -249,9 +253,10 @@ PHP
         $this->assertTrue($zip->extractTo($extractPath));
         $zip->close();
 
-        // Write site-settings.json with per_page = 2
+        // English pagination copy via html_lang (site_language may stay zh default).
         file_put_contents($extractPath.'/storage/site-settings.json', json_encode([
             'site_name' => 'Static Blog',
+            'html_lang' => 'en',
             'per_page' => 2,
         ], JSON_UNESCAPED_UNICODE));
 
@@ -355,6 +360,7 @@ PHP
                 'template_key' => $templateKey,
                 'site_settings' => [
                     'site_name' => 'Theme '.$templateKey,
+                    'html_lang' => 'en',
                     'per_page' => 2,
                     'active_theme' => $templateKey,
                 ],
@@ -373,6 +379,13 @@ PHP
             $this->assertTrue($zip->open($package['path']));
             $this->assertTrue($zip->extractTo($extractPath));
             $zip->close();
+
+            file_put_contents($extractPath.'/storage/site-settings.json', json_encode([
+                'site_name' => 'Theme '.$templateKey,
+                'html_lang' => 'en',
+                'per_page' => 2,
+                'active_theme' => $templateKey,
+            ], JSON_UNESCAPED_UNICODE));
 
             // Write 5 articles
             $articlesDir = $extractPath.'/storage/articles';

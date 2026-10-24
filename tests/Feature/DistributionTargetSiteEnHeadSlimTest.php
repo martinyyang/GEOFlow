@@ -56,7 +56,9 @@ class DistributionTargetSiteEnHeadSlimTest extends TestCase
         $this->assertStringContainsString('function renderListNotFound', $frontController);
         $this->assertStringContainsString('supports_head_requests', $frontController);
         $this->assertStringContainsString('$isHead = $method === \'HEAD\';', $frontController);
-        $this->assertStringNotContainsString('site_language', $frontController);
+        $this->assertStringContainsString('function normalizeSiteLanguage', $frontController);
+        $this->assertStringContainsString('function siteText', $frontController);
+        $this->assertStringContainsString('site_language', $frontController);
 
         $zip->close();
         if (is_file($package['path'])) {
@@ -84,6 +86,7 @@ class DistributionTargetSiteEnHeadSlimTest extends TestCase
             'template_key' => 'default',
             'site_settings' => [
                 'site_name' => 'Default English Blog',
+                'html_lang' => 'en',
                 'per_page' => 2,
             ],
             'status' => 'active',
@@ -102,9 +105,10 @@ class DistributionTargetSiteEnHeadSlimTest extends TestCase
         $this->assertTrue($zip->extractTo($extractPath));
         $zip->close();
 
-        // Write site-settings.json with per_page = 2 and no html_lang (default)
+        // English pagination/lang via explicit html_lang; site_language may stay zh default.
         file_put_contents($extractPath.'/storage/site-settings.json', json_encode([
             'site_name' => 'Default English Blog',
+            'html_lang' => 'en',
             'per_page' => 2,
         ], JSON_UNESCAPED_UNICODE));
 
@@ -129,7 +133,7 @@ PHP
         try {
             $this->waitForHttpServer($endpointUrl);
 
-            // a) html_lang NOT set anywhere (default)
+            // a) html_lang=en → English document lang + pagination chrome
             $page1Response = Http::timeout(3)->get($endpointUrl.'/');
             $this->assertSame(200, $page1Response->status());
             $this->assertStringContainsString('<html lang="en"', $page1Response->body());
