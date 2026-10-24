@@ -52,6 +52,7 @@ class DistributionTargetSitePackageBuilder
     private function config(DistributionChannel $channel, string $keyId, string $plainSecret): string
     {
         $siteSettings = $channel->resolvedSiteSettings();
+        $storedSettings = is_array($channel->site_settings) ? $channel->site_settings : [];
         $frontMode = method_exists($channel, 'frontMode') ? $channel->frontMode() : (string) ($channel->front_mode ?? 'static');
         $frontMode = in_array($frontMode, ['static', 'rewrite'], true) ? $frontMode : 'static';
         $staticPublishEnabled = $frontMode === 'static';
@@ -68,6 +69,7 @@ class DistributionTargetSitePackageBuilder
             'featured_limit' => $siteSettings['featured_limit'],
             'per_page' => $siteSettings['per_page'],
             'site_language' => $this->siteLanguage($siteSettings),
+            'html_lang' => $this->normalizeHtmlLangForPackage($storedSettings),
             'homepage_style' => $siteSettings['homepage_style'] ?? [],
             'homepage_modules' => $siteSettings['homepage_modules'] ?? [],
             'home_carousel_slides' => $siteSettings['home_carousel_slides'] ?? [],
@@ -101,6 +103,7 @@ class DistributionTargetSitePackageBuilder
             ."    'featured_limit' => ".$config['featured_limit'].",\n"
             ."    'per_page' => ".$config['per_page'].",\n"
             .($config['site_language'] !== 'zh' ? "    'site_language' => ".var_export($config['site_language'], true).",\n" : '')
+            .($config['html_lang'] !== '' ? "    'html_lang' => ".var_export($config['html_lang'], true).",\n" : '')
             ."    'homepage_style' => ".var_export($config['homepage_style'], true).",\n"
             ."    'homepage_modules' => ".var_export($config['homepage_modules'], true).",\n"
             ."    'home_carousel_slides' => ".var_export($config['home_carousel_slides'], true).",\n"
@@ -449,6 +452,16 @@ HTACCESS;
     private function siteLanguage(array $settings): string
     {
         return DistributionChannel::normalizeSiteLanguage($settings['site_language'] ?? null);
+    }
+
+    private function normalizeHtmlLangForPackage(array $settings): string
+    {
+        $value = trim((string) ($settings['html_lang'] ?? ''));
+        if ($value === '' || preg_match('/^[a-zA-Z]{2,3}(?:-[a-zA-Z0-9]{2,8})?$/', $value) !== 1) {
+            return '';
+        }
+
+        return strtolower($value);
     }
 
     private function initialSeoPayload(DistributionChannel $channel, array $settings, string $title): array
